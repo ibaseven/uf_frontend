@@ -5,8 +5,8 @@ services:
     image: ${DOCKERHUB_USERNAME}/frontend:${TAG}
     networks:
       - traefik-public
-    environment:
-      - NODE_ENV=production
+    env_file:
+      - .env
     deploy:
       labels:
         - "traefik.enable=true"
@@ -16,14 +16,14 @@ services:
         - "traefik.http.services.frontend-${ENV}.loadbalancer.server.port=3000"
         
         # HTTPS Router
-        - "traefik.http.routers.frontend-${ENV}-secure.rule=Host(`actionuniversalfab.com`) || Host(`www.actionuniversalfab.com`)"
+        - "traefik.http.routers.frontend-${ENV}-secure.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
         - "traefik.http.routers.frontend-${ENV}-secure.entrypoints=websecure"
         - "traefik.http.routers.frontend-${ENV}-secure.tls=true"
         - "traefik.http.routers.frontend-${ENV}-secure.tls.certresolver=leresolver"
         - "traefik.http.routers.frontend-${ENV}-secure.service=frontend-${ENV}"
         
         # HTTP Router avec redirection
-        - "traefik.http.routers.frontend-${ENV}-http.rule=Host(`actionuniversalfab.com`) || Host(`www.actionuniversalfab.com`)"
+        - "traefik.http.routers.frontend-${ENV}-http.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
         - "traefik.http.routers.frontend-${ENV}-http.entrypoints=web"
         - "traefik.http.routers.frontend-${ENV}-http.middlewares=redirect-to-https"
         
