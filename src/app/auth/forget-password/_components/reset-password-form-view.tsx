@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
 
 interface ResetPasswordFormViewProps {
   telephone: string;
@@ -28,11 +28,11 @@ export const ResetPasswordFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            <Image
+           {/*  <Image
               src={logoDioko}
               alt="Logo Dioko"
               className="object-contain"
-            />
+            /> */}
           </Link>
         </div>
       </div>

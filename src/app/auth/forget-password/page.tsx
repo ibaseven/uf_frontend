@@ -1,7 +1,7 @@
 // app/auth/forget-password/page.tsx
 import React from 'react';
 import ResetPasswordForm from './_components/reset-password-form';
-import logoright from "../../../../public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
+//import logoright from "../../../../public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -52,13 +52,13 @@ export default async function ForgetPasswordPage() {
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
         <ResetPasswordForm />
         <div className="hidden md:block md:w-1/2 relative">
-          <Image
+        {/*   <Image
             src={logoright}
             alt="Image de réinitialisation"
             layout="fill"
             objectFit="cover"
             className="absolute inset-0"
-          />
+          /> */}
           {/* Overlay avec message motivant */}
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center p-8">
             <div className="text-white text-center">
