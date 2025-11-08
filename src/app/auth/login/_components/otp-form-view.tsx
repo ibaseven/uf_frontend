@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
 import {
   InputOTP,
   InputOTPGroup,

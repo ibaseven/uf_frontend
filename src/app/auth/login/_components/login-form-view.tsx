@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
-import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
 import { AlertFeedback } from "@/components/alert-feedback";
 import CustomInputError from "@/components/custom-input-error";
 import SubmitButton from "@/components/submit-button";
