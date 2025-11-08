@@ -78,11 +78,11 @@ export const RegisterOtpFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            <Image
+            {/* <Image
               src={logoDioko}
               alt="Image d'authentification"
               className="object-contain"
-            />
+            /> */}
           </Link>
         </div>
       </div>

@@ -1,7 +1,7 @@
 // app/login/page.tsx
 import React from 'react';
 import LoginForm from './_components/login-form';
-import logoright from "../../../../public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
+//import logoright from "../../../../public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -56,13 +56,13 @@ export default async function LoginPage() {
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
         <LoginForm />
         <div className="hidden md:block md:w-1/2 relative">
-          <Image
+          {/* <Image
             src={logoright}
             alt="Image d'authentification"
             layout="fill"
             objectFit="cover"
             className="absolute inset-0"
-          />
+          /> */}
         </div>
       </div>
     </div>
