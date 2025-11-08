@@ -15,15 +15,18 @@ FROM base AS builder
 
 WORKDIR /app
 
-COPY . .
+# ✅ Déclarer l'argument de build
+ARG NEXT_PUBLIC_API_URL
 
-#COPY .env.production ./
-
+# ✅ Le rendre disponible comme variable d'environnement
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NODE_ENV=production
+
+COPY . .
 
 RUN npm run build
 
-# Runtime st
+# Runtime stage
 FROM node:20
 
 # Set working directory for the runtime stage
