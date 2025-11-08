@@ -1,7 +1,7 @@
 // schemas/reset-password-schema.ts
 import { z } from "zod";
 
-// Schéma pour la demande de réinitialisation
+// Schéma pour la demande de réinitialisationjhjghj
 export const ResetPasswordSchema = z.object({
   telephone: z
     .string()
