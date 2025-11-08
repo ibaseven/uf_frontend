@@ -20,12 +20,12 @@ jobs:
           if [ "${GITHUB_REF##*/}" == "main" ]; then
             echo "ENV=production" >> $GITHUB_ENV
             echo "TAG=latest" >> $GITHUB_ENV
-            echo "DOMAIN=https://actionuniversalfab.com" >> $GITHUB_ENV
+            echo "DOMAIN=actionuniversalfab.com" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/main" >> $GITHUB_ENV
           else
             echo "ENV=staging" >> $GITHUB_ENV
             echo "TAG=staging" >> $GITHUB_ENV
-            echo "DOMAIN=https://staging-client.actionuniversalfab.com" >> $GITHUB_ENV
+            echo "DOMAIN=staging-client.actionuniversalfab.com" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/staging" >> $GITHUB_ENV
           fi
 
