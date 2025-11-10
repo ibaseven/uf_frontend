@@ -16,21 +16,21 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 
 // Auth endpoints
-export const LOGIN_URL = `${API_URL}/auth/signin`
+export const LOGIN_URL = `${API_URL}/login`
 export const REGISTER_URL_FOR_ACTIONNAIRE = `${API_URL}/signupForActionnaire`
 export const AUTH_URL = `${API_URL}/verify-token`
 export const GET_ACTIONNAIRES_URL= `${API_URL}/admin/actionnaires`;
 export const GET_BENEFICES_URL= `${API_URL}/actionnaire/benefices-entreprise`;
-export const GET_ACTIONNAIRES_URL_2= `${API_URL}/users/my-actions`;
+export const GET_ACTIONNAIRES_URL_2= `${API_URL}/getMyProfile`;
 export const INITIATE_WITHDRAWAL_URL= `${API_URL}/dividends/withdraw/initiate`;
 export const CONFIRM_WITHDRAWAL_URL= `${API_URL}/dividends/withdraw/confirm`;
 export const REGISTER_URL = `${API_URL}/auth/signUp`//okk
-export const REGISTER_INITIATE_URL = `${API_URL}/api/auth/signup/initiate`;
-export const REGISTER_VERIFY_OTP_URL = `${API_URL}/api/auth/signup/verify`;
+export const REGISTER_INITIATE_URL = `${API_URL}/createAccount`;
+export const REGISTER_VERIFY_OTP_URL = `${API_URL}/createAccount/verify-otp`;
 export const REGISTER_RESEND_OTP_URL = `${API_URL}/api/auth/signup/resend-otp`;
 export const USERSBYID_URL = `${API_URL}/get-user`
 export const CHANGE_PASSWORD_URL = `${API_URL}/change-password`
-export const GET_TRANSACTIONS_URL = `${API_URL}/transactions`
+export const GET_TRANSACTIONS_URL = `${API_URL}/getransactionbyuser`
 export const GET_TRANSACTIONS_ACTIONS_SELL_BY_USER_URL = `${API_URL}/actions/sellActionsBetweenUser`
 export const GET_TRANSACTIONS_PURCHASE_URL = `${API_URL}/actions/admin/transactions`
 export const GET_MY_OWN_TRANSACTIONS_PURCHASE_URL = `${API_URL}/myRequestToSellAction`
@@ -64,3 +64,5 @@ export const GET_MY_SALE_REQUESTS_URL = `${API_URL}/my-requests`;
 export const GET_ALL_SALE_REQUESTS_URL = `${API_URL}/GetallActionToSell`;
 export const APPROVE_SALE_URL = `${API_URL}/approve`;
 export const REJECT_SALE_URL = `${API_URL}/reject`;;
+export const PARTICIPATE_PROJECT_URL = `${API_URL}/participeToProject`;;
+export const GET_ALL_PROJECTS_URL = `${API_URL}/getAllProject`;;
