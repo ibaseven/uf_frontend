@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Eye, EyeOff, RefreshCw, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../.././public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
+import logoDioko from "../../../../.././public/img/logoUni.png";
 import {
   InputOTP,
   InputOTPGroup,
@@ -72,11 +72,11 @@ export const ResetOtpFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-           {/*  <Image
+             <Image
               src={logoDioko}
               alt="Logo Dioko"
               className="object-contain"
-            /> */}
+            /> 
           </Link>
         </div>
       </div>

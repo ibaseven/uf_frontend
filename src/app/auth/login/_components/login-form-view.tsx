@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+import logo from "../../../../../public/img/logoUni.png";
 import { AlertFeedback } from "@/components/alert-feedback";
 import CustomInputError from "@/components/custom-input-error";
 import SubmitButton from "@/components/submit-button";
@@ -32,11 +32,11 @@ export const LoginFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            {/* <Image
-              src={logoDioko}
+             <Image
+              src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> */}
+            /> 
           </Link>
         </div>
       </div>

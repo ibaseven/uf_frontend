@@ -8,7 +8,7 @@ import { GET_ACTIONNAIRES_URL_2 } from '@/lib/endpoint';
 const MyActionsPage = async () => {
   try {
     const response = await fetchJSON(GET_ACTIONNAIRES_URL_2);
-    console.log('Response from GET_ACTIONNAIRES_URL_2:', response);
+    //console.log('Response from GET_ACTIONNAIRES_URL_2:', response);
     
     return (
       <ActionnaireUserView

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+import logoDioko from "../../../../../public/img/logoUni.png";
 
 interface ResetPasswordFormViewProps {
   telephone: string;
@@ -28,11 +28,11 @@ export const ResetPasswordFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-           {/*  <Image
+           <Image
               src={logoDioko}
               alt="Logo Dioko"
               className="object-contain"
-            /> */}
+            /> 
           </Link>
         </div>
       </div>
@@ -40,7 +40,7 @@ export const ResetPasswordFormView = ({
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Réinitialiser le mot de passe</h2>
         <p className="text-gray-600">
-          Entrez votre numéro de téléphone pour recevoir un code de réinitialisation sur WhatsApp
+          Entrez votre numéro de téléphone pour recevoir un code de réinitialisation par SMS
         </p>
       </div>
 
