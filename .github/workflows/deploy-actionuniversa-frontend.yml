@@ -22,12 +22,28 @@ jobs:
             echo "TAG=latest" >> $GITHUB_ENV
             echo "COMPOSE_FILE=frontend-production.yml" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/main" >> $GITHUB_ENV
+            echo "API_URL=https://api.actionuniversalfab.com/api" >> $GITHUB_ENV
           else
             echo "ENV=staging" >> $GITHUB_ENV
             echo "TAG=staging" >> $GITHUB_ENV
             echo "COMPOSE_FILE=frontend-staging.yml" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/staging" >> $GITHUB_ENV
+            echo "API_URL=https://api-staging.actionuniversalfab.com/api" >> $GITHUB_ENV
           fi
+
+      - name: Debug - Show environment variables
+        run: |
+          echo "======================================"
+          echo "🔍 ENVIRONMENT VARIABLES"
+          echo "======================================"
+          echo "Branch: ${GITHUB_REF##*/}"
+          echo "ENV: ${{ env.ENV }}"
+          echo "TAG: ${{ env.TAG }}"
+          echo "API_URL: ${{ env.API_URL }}"
+          echo "COMPOSE_FILE: ${{ env.COMPOSE_FILE }}"
+          echo "REMOTE_PATH: ${{ env.REMOTE_PATH }}"
+          echo "======================================"
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -36,8 +52,46 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }} .
+          echo "======================================"
+          echo "🔨 BUILDING DOCKER IMAGE"
+          echo "======================================"
+          echo "Building with NEXT_PUBLIC_API_URL=${{ env.API_URL }}"
+          echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}"
+          echo "======================================"
+          
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ env.API_URL }} \
+            --no-cache \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }} \
+            .
+          
+          echo ""
+          echo "======================================"
+          echo "📤 PUSHING IMAGE TO DOCKER HUB"
+          echo "======================================"
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}
+          
+          echo ""
+          echo "======================================"
+          echo "✅ BUILD & PUSH COMPLETED"
+          echo "======================================"
+          echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}"
+          echo "API_URL injected: ${{ env.API_URL }}"
+          echo "======================================"
+
+      - name: Verify docker-compose file exists
+        run: |
+          echo "======================================"
+          echo "📋 CHECKING DOCKER-COMPOSE FILE"
+          echo "======================================"
+          if [ ! -f "${{ env.COMPOSE_FILE }}" ]; then
+            echo "❌ ERROR: ${{ env.COMPOSE_FILE }} not found!"
+            echo "Available files:"
+            ls -la *.yml || echo "No .yml files found"
+            exit 1
+          fi
+          echo "✅ Found: ${{ env.COMPOSE_FILE }}"
+          echo "======================================"
 
       - name: Copy docker-compose file to server
         uses: appleboy/scp-action@master
@@ -50,21 +104,6 @@ jobs:
           target: "${{ env.REMOTE_PATH }}"
           strip_components: 0
 
-      - name: Create .env file on server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          port: ${{ secrets.SERVER_PORT }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            mkdir -p ${{ env.REMOTE_PATH }}
-            cat <<EOF > ${{ env.REMOTE_PATH }}/.env
-            NODE_ENV=${{ env.ENV }}
-            PORT=3000
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            EOF
-
       - name: Deploy Frontend on Server
         uses: appleboy/ssh-action@master
         with:
@@ -73,8 +112,63 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
+            
+            echo "======================================"
+            echo "🚀 STARTING DEPLOYMENT"
+            echo "======================================"
+            echo "Environment: ${{ env.ENV }}"
+            echo "Remote path: ${{ env.REMOTE_PATH }}"
+            echo "Compose file: ${{ env.COMPOSE_FILE }}"
+            echo "======================================"
+            
+            echo ""
+            echo "🔐 Logging in to Docker Hub..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            
+            echo ""
+            echo "📁 Preparing deployment directory..."
+            mkdir -p ${{ env.REMOTE_PATH }}
             cd ${{ env.REMOTE_PATH }}
+            
+            echo ""
+            echo "🔄 Pulling latest image..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}
+            
+            echo ""
+            echo "🚀 Deploying frontend stack..."
             docker stack deploy -c ${{ env.COMPOSE_FILE }} frontend-${{ env.ENV }} --with-registry-auth
+            
+            echo ""
+            echo "⏳ Waiting for service to start..."
+            sleep 15
+            
+            echo ""
+            echo "======================================"
+            echo "📊 SERVICE STATUS"
+            echo "======================================"
+            docker service ls | grep frontend-${{ env.ENV }} || echo "Service not found"
+            
+            echo ""
+            echo "======================================"
+            echo "📋 SERVICE TASKS"
+            echo "======================================"
+            docker service ps frontend-${{ env.ENV }}_frontend --no-trunc || echo "No tasks found"
+            
+            echo ""
+            echo "======================================"
+            echo "📝 SERVICE LOGS (last 30 lines)"
+            echo "======================================"
+            docker service logs frontend-${{ env.ENV }}_frontend --tail 30 || echo "No logs available yet"
+            
+            echo ""
+            echo "🧹 Cleaning up old images..."
             docker image prune -f
+            
+            echo ""
+            echo "======================================"
+            echo "✅ DEPLOYMENT COMPLETED"
+            echo "======================================"
+            echo "Environment: ${{ env.ENV }}"
+            echo "Service: frontend-${{ env.ENV }}_frontend"
+            echo "======================================"
