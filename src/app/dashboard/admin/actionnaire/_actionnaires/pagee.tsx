@@ -524,43 +524,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   };
 
   // Fonction pour basculer le statut d'un actionnaire
-  const handleToggleStatus = async (actionnaireId: string, currentBlocked: boolean) => {
-    startTransition(async () => {
-      try {
-        const result = await toggleActionnaireStatus({
-          actionnaireId,
-          isBlocked: !currentBlocked
-        });
 
-        if (result.type === 'success') {
-          setMessage({ type: 'success', text: result.message });
-          router.refresh();
-        } else {
-          setMessage({ type: 'error', text: result.message });
-        }
-      } catch (error) {
-        setMessage({ type: 'error', text: 'Erreur lors du changement de statut' });
-      }
-    });
-  };
-
-  // Fonction pour recalculer tous les dividendes
-  const handleRecalculateDividendes = async () => {
-    startTransition(async () => {
-      try {
-        const result = await recalculateAllDividendes();
-
-        if (result.type === 'success') {
-          setMessage({ type: 'success', text: result.message });
-          router.refresh();
-        } else {
-          setMessage({ type: 'error', text: result.message });
-        }
-      } catch (error) {
-        setMessage({ type: 'error', text: 'Erreur lors du recalcul des dividendes' });
-      }
-    });
-  };
 
   // Filtrer les actionnaires selon le filtre sélectionné
   const filteredActionnaires = React.useMemo(() => {
@@ -939,7 +903,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
       <ActionnairesList
         actionnaires={filteredActionnaires}
         onEditUser={handleEditUser}
-        onToggleStatus={handleToggleStatus}
+       
         onDeleteUser={handleDeleteUser}  // ← Nouvelle prop
         isPending={isPending}
         formatAmount={formatAmount}

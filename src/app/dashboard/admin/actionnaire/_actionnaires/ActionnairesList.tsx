@@ -37,7 +37,7 @@ interface Actionnaire {
 interface ActionnaireListProps {
   actionnaires: Actionnaire[];
   onEditUser: (actionnaire: Actionnaire) => void;
-  onToggleStatus: (actionnaireId: string, currentBlocked: boolean) => void;
+
   onDeleteUser: (userId: string, userName: string) => void;
   isPending: boolean;
   formatAmount: (amount: number) => string;
@@ -55,7 +55,6 @@ type SortDirection = 'asc' | 'desc';
 const ActionnairesList: React.FC<ActionnaireListProps> = ({
   actionnaires,
   onEditUser,
-  onToggleStatus,
   onDeleteUser,
   isPending,
   formatAmount,
@@ -609,27 +608,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                           <Edit3 className="w-3 h-3 mr-1" />
                           Modifier
                         </button>
-                        <button
-                          onClick={() => onToggleStatus(actionnaire.id, actionnaire.isBlocked)}
-                          disabled={isPending}
-                          className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                            actionnaire.isBlocked
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          {actionnaire.isBlocked ? (
-                            <>
-                              <UserCheck className="w-3 h-3 mr-1" />
-                              Débloquer
-                            </>
-                          ) : (
-                            <>
-                              <UserX className="w-3 h-3 mr-1" />
-                              Bloquer
-                            </>
-                          )}
-                        </button>
+                      
                         <button
                           onClick={() => handleDeleteClick(actionnaire)}
                           disabled={isPending}
@@ -751,27 +730,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                   <Edit3 className="w-4 h-4 mr-2" />
                   Modifier
                 </button>
-                <button
-                  onClick={() => onToggleStatus(actionnaire.id, actionnaire.isBlocked)}
-                  disabled={isPending}
-                  className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors text-sm ${
-                    actionnaire.isBlocked
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-red-100 text-red-700 hover:bg-red-200'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {actionnaire.isBlocked ? (
-                    <>
-                      <UserCheck className="w-4 h-4 mr-2" />
-                      Débloquer
-                    </>
-                  ) : (
-                    <>
-                      <UserX className="w-4 h-4 mr-2" />
-                      Bloquer
-                    </>
-                  )}
-                </button>
+              
                 <button
                   onClick={() => handleDeleteClick(actionnaire)}
                   disabled={isPending}
