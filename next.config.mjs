@@ -8,13 +8,15 @@ const nextConfig = {
         },
       ],
     },
+     serverActions: {
+      bodySizeLimit: '50mb',
+    },
     typescript: {
-
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  };
+      ignoreBuildErrors: true,
+    },
+    eslint: {
+      ignoreDuringBuilds: true,
+    },
+};
 
 export default nextConfig;

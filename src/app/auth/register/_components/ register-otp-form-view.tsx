@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+import logo from "../../../../../public/img/logoUni.png";
 import {
   InputOTP,
   InputOTPGroup,
@@ -78,18 +78,18 @@ export const RegisterOtpFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            {/* <Image
-              src={logoDioko}
+             <Image
+              src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> */}
+            /> 
           </Link>
         </div>
       </div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Vérification WhatsApp</h2>
+        <h2 className="text-2xl font-bold mb-2">Vérification SMS</h2>
         <p className="text-gray-600">
-          Un code de vérification a été envoyé via WhatsApp au numéro : {telephone}
+          Un code de vérification a été envoyé via SMS au numéro : {telephone}
         </p>
       </div>
       <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>

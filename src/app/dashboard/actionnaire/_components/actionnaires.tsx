@@ -60,10 +60,7 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
             <p className="text-sm text-gray-600">Nom complet</p>
             <p className="font-semibold">{user.firstName} {user.lastName}</p>
           </div>
-          <div>
-            <p className='text-sm text-gray-600 font-mono text-sm'>Achetez dès maintenant des actions et augmentez vos parts dans la société.
-1actions = 10000fcfa</p>
-          </div>
+        
           <div>
             <p className="text-sm text-gray-600">Téléphone</p>
             <p className="font-semibold">{user.telephone}</p>
@@ -117,7 +114,7 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 flex items-center justify-between">
+        {/* <div className="bg-white rounded-2xl p-6 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-800">Investissez dès maintenant</h3>
           <PurchaseMethodSelector 
             currentActions={user?.actionsNumber}
@@ -143,7 +140,7 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
             // ✅ NOUVEAU : Callback pour rafraîchir la page après vente
             onSaleSuccess={handleSaleSuccess}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Résumé et actions */}

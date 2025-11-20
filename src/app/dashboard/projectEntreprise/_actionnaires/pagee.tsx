@@ -8,10 +8,11 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  Users
+  Users,
+  X,
+  Info
 } from 'lucide-react';
 import { participateToProject } from '@/actions/projectActions';
-
 
 // Types
 interface Project {
@@ -27,10 +28,20 @@ interface ProjectsViewProps {
   projects: Project[];
 }
 
+interface ParticipationDetails {
+  projectName: string;
+  numberOfPacks: number;
+  totalInvestment: number;
+  amountPaid: number;
+  remainingToPay: number;
+}
+
 const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showParticipationModal, setShowParticipationModal] = useState(false);
+  const [participationDetails, setParticipationDetails] = useState<ParticipationDetails | null>(null);
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -63,26 +74,17 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
       if (result.type === 'success') {
         setSuccess(`Participation au projet "${projectName}" enregistrée avec succès !`);
         
-        // Afficher les détails de la participation
+        // Afficher les détails de la participation dans une popup
         if (result.participation) {
-          const { numberOfPacks, totalInvestment, amountPaid, remainingToPay } = result.participation;
-          setTimeout(() => {
-            alert(
-              `Participation enregistrée !\n\n` +
-              `Projet: ${projectName}\n` +
-              `Nombre de packs: ${numberOfPacks}\n` +
-              `Investissement total: ${formatAmount(totalInvestment)}\n` +
-              `Montant payé: ${formatAmount(amountPaid)}\n` +
-              `Reste à payer: ${formatAmount(remainingToPay)}\n\n` +
-              `Le paiement est attendu pour valider votre participation.`
-            );
-          }, 500);
+          setParticipationDetails({
+            projectName: projectName,
+            numberOfPacks: result.participation.numberOfPacks,
+            totalInvestment: result.participation.totalInvestment,
+            amountPaid: result.participation.amountPaid,
+            remainingToPay: result.participation.remainingToPay,
+          });
+          setShowParticipationModal(true);
         }
-
-        // Recharger la page après 2 secondes
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
       } else {
         setError(result.message || 'Erreur lors de la participation');
       }
@@ -92,6 +94,15 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
     } finally {
       setLoading(null);
     }
+  };
+
+  // Fermer la modal et recharger
+  const closeModalAndReload = () => {
+    setShowParticipationModal(false);
+    setParticipationDetails(null);
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   return (
@@ -195,6 +206,90 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de confirmation de participation */}
+      {showParticipationModal && participationDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md mx-auto shadow-2xl transform transition-all">
+            {/* Header de la modal */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-7 h-7 text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white ml-3">Participation Confirmée</h2>
+                </div>
+                <button
+                  onClick={closeModalAndReload}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu de la modal */}
+            <div className="p-6">
+              {/* Nom du projet */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-600 mb-1">Projet</p>
+                <p className="text-lg font-bold text-blue-900">{participationDetails.projectName}</p>
+              </div>
+
+              {/* Détails de la participation */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Nombre de packs</span>
+                  <span className="text-lg font-bold text-gray-900">{participationDetails.numberOfPacks}</span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Investissement total</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {formatAmount(participationDetails.totalInvestment)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-gray-700 font-medium">Montant payé</span>
+                  <span className="text-lg font-bold text-green-600">
+                    {formatAmount(participationDetails.amountPaid)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <span className="text-gray-700 font-medium">Reste à payer</span>
+                  <span className="text-lg font-bold text-orange-600">
+                    {formatAmount(participationDetails.remainingToPay)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Message d'information */}
+              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <Info className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">Prochaine étape</p>
+                    <p>Le paiement est attendu pour valider définitivement votre participation au projet.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer de la modal */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-lg">
+              <button
+                onClick={closeModalAndReload}
+                className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Compris, continuer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

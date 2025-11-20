@@ -25,11 +25,18 @@ const RegisterForm = () => {
     url: "",
   });
 
-  const [firstName, setFirstName] = useState("");
+   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [nationalite, setNationalite] = useState("");
+  const [ville, setVille] = useState("");
+  const [pays, setPays] = useState("");
+  const [cni, setCni] = useState("");
+  const [dateNaissance, setDateNaissance] = useState("");
+  const [adresse, setAdresse] = useState("");
   const [telephone, setTelephone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+ 
   const [otp, setOtp] = useState("");
 
   const handleRegister = async (formData: FormData) => {
@@ -123,19 +130,31 @@ const RegisterForm = () => {
     <div className="w-full md:w-1/2 p-8">
       {!state.requiresOtp ? (
         <RegisterFormView
-          firstName={firstName}
-          setFirstName={setFirstName}
-          lastName={lastName}
-          setLastName={setLastName}
-          telephone={telephone}
-          setTelephone={setTelephone}
-          password={password}
-          setPassword={setPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-          state={state}
-          handleRegister={handleRegister}
-        />
+  firstName={firstName}
+  setFirstName={setFirstName}
+  lastName={lastName}
+  setLastName={setLastName}
+  nationalite={nationalite}
+  setNationalite={setNationalite}
+  ville={ville}
+  setVille={setVille}
+  pays={pays}
+  setPays={setPays}
+  cni={cni}
+  setCni={setCni}
+  dateNaissance={dateNaissance}
+  setDateNaissance={setDateNaissance}
+  adresse={adresse}
+  setAdresse={setAdresse}
+  telephone={telephone}
+  setTelephone={setTelephone}
+  password={password}
+  setPassword={setPassword}
+  confirmPassword={confirmPassword}
+  setConfirmPassword={setConfirmPassword}
+  state={state}
+  handleRegister={handleRegister}
+/>
       ) : (
         <RegisterOtpFormView
           otp={otp}

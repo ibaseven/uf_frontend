@@ -22,13 +22,13 @@ export const PublicRoute: (string | RegExp)[] = [
 
 // URLs de redirection pour chaque rôle
 export const ROLE_REDIRECT_URLS: { [key: string]: string } = {
-  admin: "dashboard/admin/actionnaire",  // Ajout du rôle admin
+  universalLab_Admin: "dashboard/admin/actionnaire",  // Ajout du rôle admin
   actionnaire: "dashboard/actionnaire",
 };
 
 // Définir les chemins accessibles pour chaque rôle
 export const ROLEPAGES = {
-  admin: [  // Ajout des routes pour admin
+  universalLab_Admin: [  // Ajout des routes pour admin
     "/dashboard/entreprise",
     "/page",
     "/dashboard/admin/actionnaire",
@@ -47,7 +47,7 @@ export const ROLEPAGES = {
     "/dashboard/actionnaire", 
     "/dashboard/dividente",
     "/dashboard/mypurchase",
-     "/dashboard/rapport",
+     "/dashboard/project",
      "/dashboard/prevision",
      "/dashboard/purchaseActionnaire",
     "/dashboard/profile",

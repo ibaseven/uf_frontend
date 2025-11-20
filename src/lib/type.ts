@@ -6,7 +6,7 @@ export type User = {
     role: string;
   
   };
-export type Role = 'admin' | 'actionnaire' ;
+export type Role = 'universalLab_Admin' | 'actionnaire' ;
   export type UserInfos = {
   _id: string;
   firstName: string;

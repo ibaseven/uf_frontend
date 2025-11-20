@@ -2,7 +2,8 @@
 import React from 'react'
 import Profile from './_components/profile'
 import { fetchJSON } from '@/lib/api'
-import { USERSBYID_URL } from '@/actions/endpoint'
+import { USERSBYID_URL } from '@/lib/endpoint'
+
 
 type Props = {
     params :{
