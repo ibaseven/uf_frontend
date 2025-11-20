@@ -25,7 +25,7 @@ export const requestPasswordReset = async (state: any, formData: FormData) => {
 
     const { telephone } = validatedFields.data;
 
-    // Faire une requête POST pour demander l'OTP de réinitialisation
+    // Faire une  POST pour demander l'OTP de réinitialisation
     const res = await axios.post(REQUEST_PASSWORD_RESET_URL, {
       telephone,
     });
