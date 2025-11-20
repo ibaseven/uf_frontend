@@ -35,6 +35,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // NOUVEAU : Ne pas bloquer les routes API spécifiques (upload de fichiers)
+  if (pathname.startsWith('/api/projects')) {
+    return NextResponse.next();
+  }
+
   // Si la route n'existe pas et n'est pas publique => login
   if (!isRoutePublic(pathname) && !doesRouteExist(pathname)) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
@@ -47,7 +52,6 @@ export async function middleware(req: NextRequest) {
 
   try {
     const currentUser = await getAuthenticatedUser();
-
 
     if (!currentUser) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
@@ -84,9 +88,9 @@ export async function middleware(req: NextRequest) {
   }
 }
 
-// Matcher général (ajuster si nécessaire)
+// Matcher : exclure /api/projects de la vérification du middleware
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|logo.ico|public/).*)',
+    '/((?!api/projects|api|_next/static|_next/image|favicon.ico|logo.ico|public/).*)',
   ],
 };

@@ -29,7 +29,7 @@ export function getPages(pathname: string, role?: string): Group[] {
   let rolePages: Group[] = [];
 
   // Rendre le tableau en fonction du rôle
-  if (role === "admin") {
+  if (role === "universalLab_Admin") {
     rolePages = [
       {
         groupLabel: "Administrateur",
@@ -43,18 +43,18 @@ export function getPages(pathname: string, role?: string): Group[] {
           },
           {
             href: "/dashboard/admin/prevision",
-            label: "Prevision",
+            label: "Projects",
             active: pathname === "/dashboard/admin/prevision",
             icon: LayoutGrid,
             submenus: []
           },
-          {
+          /* {
             href: "/dashboard/admin/historique",
             label: "Historique",
             active: pathname === "/dashboard/admin/historique",
             icon: LayoutGrid,
             submenus: []
-          },
+          }, */
  {
             href: " /dashboard/admin/purchaseActionnaire",
             label: "Historique Transaction Actions",
@@ -62,20 +62,20 @@ export function getPages(pathname: string, role?: string): Group[] {
             icon: LayoutGrid,
             submenus: []
           },
- {
+ /* {
             href: " /dashboard/admin/sellaction",
             label: "Vente des Actions",
             active: pathname === "/dashboard/admin/sellaction",
             icon: LayoutGrid,
             submenus: []
-          },
-           {
+          }, */
+           /* {
             href: " /dashboard/admin/actionssellbuyuser",
             label: "Vente des Actions Entre User",
             active: pathname === "/dashboard/admin/actionssellbuyuser",
             icon: LayoutGrid,
             submenus: []
-          },
+          }, */
          
          // Ajout de la page paiements
         ]
@@ -102,37 +102,37 @@ export function getPages(pathname: string, role?: string): Group[] {
             submenus: []
           },
            {
-            href: "/dashboard/benefices",
-            label: "BÉNÉFICES",
-            active: pathname === "/dashboard/benefices",
+            href: "/dashboard/projectEntreprise",
+            label: "Projects Entreprise",
+            active: pathname === "/dashboard/projectEntreprise",
             icon: CalendarCheck,
             submenus: []
           } 
           ,
            {
-            href: "/dashboard/rapport",
-            label: "RAPPORT",
-            active: pathname === "/dashboard/rapport",
+            href: "/dashboard/project",
+            label: "Mes Projects",
+            active: pathname === "/dashboard/project",
             icon: CalendarCheck,
             submenus: []
           },
-           {
+           /* {
             href: "/dashboard/prevision",
             label: "Prevision",
             active: pathname === "/dashboard/prevision",
             icon: LayoutGrid,
             submenus: []
-          },
+          }, */
           { 
-           href: " /dashboard/purchaseActionnaire",
+           href: " /dashboard/transactions",
             label: "Historique Transaction Actions",
-            active: pathname === "/dashboard/purchaseActionnaire",
+            active: pathname === "/dashboard/transactions",
             icon: LayoutGrid,
             submenus: []
           },
           { 
            href: " /dashboard/mypurchase",
-            label: "Vente de mes actions",
+            label: "Achat des Actions",
             active: pathname === "/dashboard/mypurchase",
             icon: LayoutGrid,
             submenus: []

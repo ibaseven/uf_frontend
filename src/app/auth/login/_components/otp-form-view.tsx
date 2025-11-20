@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+import logo from "../../../../../public/img/logoUni.png";
 import {
   InputOTP,
   InputOTPGroup,
@@ -45,11 +45,11 @@ export const OtpFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            {/* <Image
-              src={logoDioko}
+             <Image
+              src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> */}
+            /> 
           </Link>
         </div>
       </div>

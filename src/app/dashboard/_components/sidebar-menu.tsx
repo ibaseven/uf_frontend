@@ -20,7 +20,7 @@ import { getPages } from '@/lib/page';
 const SidebarMenuContent = ({ currentUser }: { currentUser?: User}) => {
     const {  open } = useSidebar()
     const pathname = usePathname();
-    const role= currentUser?.role === ' actionnaire ' ? "admin" : currentUser?.role
+    const role= currentUser?.role === ' actionnaire ' ? "universalLab_Admin" : currentUser?.role
     const pages = getPages(pathname, role);
 
   return (

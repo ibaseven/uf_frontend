@@ -25,15 +25,7 @@ import {
   Trash2,  // ← Nouvelle icône pour la suppression
   UserMinus  // ← Nouvelle icône pour la suppression multiple
 } from 'lucide-react';
-import { 
-  toggleActionnaireStatus, 
-  recalculateAllDividendes, 
-  updateUserInfo, 
-  createNewActionnaire, 
-  addNewYearBenefices,
-  deleteUser,  // ← Nouvelle action pour la suppression
-  deleteMultipleUsers,  // ← Nouvelle action pour la suppression multiple // ← Nouvelle fonction utilitaire
-} from '@/actions/actionnaire';
+
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import CreateActionnaireModal from './CreateActionnaireModal';
 import AddNewYearModal from './AddNewYearModal';

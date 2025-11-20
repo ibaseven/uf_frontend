@@ -142,12 +142,20 @@ export const initiateRegister = async (state: any, formData: FormData) => {
         // Récupérer les données du FormData
         const firstName = formData.get("firstName") as string;
         const lastName = formData.get("lastName") as string;
+        const nationalite = formData.get("nationalite") as string;
+        const ville = formData.get("ville") as string;
+        const pays = formData.get("pays") as string;
+        const cni = formData.get("cni") as string;
+        const dateNaissance = formData.get("dateNaissance") as string;
+        const adresse = formData.get("adresse") as string;
         const telephone = formData.get("telephone") as string;
         const password = formData.get("password") as string;
         const confirmPassword = formData.get("confirmPassword") as string;
 
         // Validation basique côté client
-        if (!firstName || !lastName || !telephone || !password || !confirmPassword) {
+        if (!firstName || !lastName || !nationalite || !ville || !pays || 
+            !cni || !dateNaissance || !adresse || !telephone || 
+            !password || !confirmPassword) {
             return {
                 requiresOtp: false,
                 telephone: "",
@@ -180,21 +188,34 @@ export const initiateRegister = async (state: any, formData: FormData) => {
             };
         }
 
+        // Validation de la date de naissance (optionnel)
+        const birthDate = new Date(dateNaissance);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        
+       
+
         // Préparation des données pour l'API
         const requestData = {
             firstName,
             lastName,
+            nationalite,
+            ville,
+            pays,
+            cni,
+            dateNaissance,
+            adresse,
             telephone,
             password,
             confirmPassword
         };
 
-       // console.log("Données envoyées pour initiation:", requestData);
+        // console.log("Données envoyées pour initiation:", requestData);
         
         // Appel à votre API backend pour initier l'inscription
         const res = await axios.post(REGISTER_INITIATE_URL, requestData);
 
-       // console.log("Réponse de l'API:", res.data);
+        // console.log("Réponse de l'API:", res.data);
 
         if (res.data.success) {
             return {

@@ -6,7 +6,7 @@ import LoginPage from "./auth/login/page";
 interface JWTPayload {
 data: {
   id: string;
-  role: 'admin' | 'actionnaire';
+  role: 'universalLab_Admin' | 'actionnaire';
 };
 iat: number;
 exp: number;
@@ -30,7 +30,7 @@ export default async function Home() {
     if (token) {
       const decoded = decodeJWT(token.value);
       if (decoded && decoded.data && decoded.data.role) {
-        if (decoded.data.role === 'admin') {
+        if (decoded.data.role === 'universalLab_Admin') {
           redirect("/dashboard/admin/actionnaire");
         } else if (decoded.data.role === 'actionnaire') {
           redirect("/dashboard/actionnaire");
