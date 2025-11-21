@@ -73,4 +73,6 @@ export const BUY_ACTIONS_URL = `${API_URL}/buyActions`;
 export const GET_MY_ACTIONS_PURCHASES_URL = `${API_URL}/buyActions`;
 export const ADD_PROJECT_URL = `${API_URL}/createAnProject`;
 
+export const UPDATE_PROFILE_URL = `${API_URL}/updateProfile`;
+
 
