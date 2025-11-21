@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import Link from "next/link";
-//import logoDioko from "../../../../../public/img/NewDiokoDeseign.png";
+import logo from "../../../../../public/img/logoUni.png";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -14,6 +14,18 @@ interface RegisterFormViewProps {
   setFirstName: (value: string) => void;
   lastName: string;
   setLastName: (value: string) => void;
+  nationalite: string;
+  setNationalite: (value: string) => void;
+  ville: string;
+  setVille: (value: string) => void;
+  pays: string;
+  setPays: (value: string) => void;
+  cni: string;
+  setCni: (value: string) => void;
+  dateNaissance: string;
+  setDateNaissance: (value: string) => void;
+  adresse: string;
+  setAdresse: (value: string) => void;
   telephone: string;
   setTelephone: (value: string) => void;
   password: string;
@@ -29,6 +41,18 @@ export const RegisterFormView = ({
   setFirstName,
   lastName,
   setLastName,
+  nationalite,
+  setNationalite,
+  ville,
+  setVille,
+  pays,
+  setPays,
+  cni,
+  setCni,
+  dateNaissance,
+  setDateNaissance,
+  adresse,
+  setAdresse,
   telephone,
   setTelephone,
   password,
@@ -46,17 +70,17 @@ export const RegisterFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-            {/* <Image
-              src={logoDioko}
+            <Image
+              src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> */}
+            />
           </Link>
         </div>
       </div>
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Créer un compte</h2>
-        <p className="text-gray-600">Inscrivez-vous sur Dioko</p>
+        <p className="text-gray-600">Inscrivez-vous sur Universall Fab</p>
       </div>
       <form action={handleRegister} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
@@ -73,6 +97,7 @@ export const RegisterFormView = ({
               <CustomInputError>{state.errors.firstName}</CustomInputError>
             )}
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="lastName">Nom</Label>
             <Input
@@ -84,6 +109,91 @@ export const RegisterFormView = ({
             />
             {state?.errors?.lastName && (
               <CustomInputError>{state.errors.lastName}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="nationalite">Nationalité</Label>
+            <Input
+              id="nationalite"
+              name="nationalite"
+              placeholder="Nationalité"
+              value={nationalite}
+              onChange={(e) => setNationalite(e.target.value)}
+            />
+            {state?.errors?.nationalite && (
+              <CustomInputError>{state.errors.nationalite}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="ville">Ville</Label>
+            <Input
+              id="ville"
+              name="ville"
+              placeholder="Ville"
+              value={ville}
+              onChange={(e) => setVille(e.target.value)}
+            />
+            {state?.errors?.ville && (
+              <CustomInputError>{state.errors.ville}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pays">Pays</Label>
+            <Input
+              id="pays"
+              name="pays"
+              placeholder="Pays"
+              value={pays}
+              onChange={(e) => setPays(e.target.value)}
+            />
+            {state?.errors?.pays && (
+              <CustomInputError>{state.errors.pays}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="cni">CNI</Label>
+            <Input
+              id="cni"
+              name="cni"
+              placeholder="Numéro CNI"
+              value={cni}
+              onChange={(e) => setCni(e.target.value)}
+            />
+            {state?.errors?.cni && (
+              <CustomInputError>{state.errors.cni}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="dateNaissance">Date de naissance</Label>
+            <Input
+              id="dateNaissance"
+              name="dateNaissance"
+              type="date"
+              placeholder="Date de naissance"
+              value={dateNaissance}
+              onChange={(e) => setDateNaissance(e.target.value)}
+            />
+            {state?.errors?.dateNaissance && (
+              <CustomInputError>{state.errors.dateNaissance}</CustomInputError>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="adresse">Adresse</Label>
+            <Input
+              id="adresse"
+              name="adresse"
+              placeholder="Adresse"
+              value={adresse}
+              onChange={(e) => setAdresse(e.target.value)}
+            />
+            {state?.errors?.adresse && (
+              <CustomInputError>{state.errors.adresse}</CustomInputError>
             )}
           </div>
         </div>

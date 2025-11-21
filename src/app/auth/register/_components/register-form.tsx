@@ -7,6 +7,7 @@ import { initiateRegister, resendRegisterOtp, verifyRegisterOtp } from "@/action
 import { RegisterOtpFormView } from "./ register-otp-form-view";
 
 
+
 const RegisterForm = () => {
   const router = useRouter();
   const [state, setState] = useState({
@@ -24,26 +25,40 @@ const RegisterForm = () => {
     url: "",
   });
 
-  const [firstName, setFirstName] = useState("");
+   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [nationalite, setNationalite] = useState("");
+  const [ville, setVille] = useState("");
+  const [pays, setPays] = useState("");
+  const [cni, setCni] = useState("");
+  const [dateNaissance, setDateNaissance] = useState("");
+  const [adresse, setAdresse] = useState("");
   const [telephone, setTelephone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+ 
   const [otp, setOtp] = useState("");
 
   const handleRegister = async (formData: FormData) => {
     try {
       const result = await initiateRegister(null, formData);
       
-      setState(prevState => ({
+      // Mise à jour complète de l'état avec tous les champs
+      setState({
         requiresOtp: result.requiresOtp || false,
         telephone: result.telephone || telephone,
         message: result.message || "",
         type: result.type || "",
         errors: result.errors || {},
         tempUserId: result.tempUserId || "",
-      }));
+      });
+
+      // Afficher un message de succès si l'OTP est requis
+      if (result.requiresOtp) {
+        console.log("OTP requis, affichage du formulaire OTP");
+      }
     } catch (error) {
+      console.error("Erreur lors de l'inscription:", error);
       setState({
         requiresOtp: false,
         telephone: "",
@@ -69,6 +84,7 @@ const RegisterForm = () => {
         router.push(result.url);
       }
     } catch (error) {
+      console.error("Erreur lors de la vérification OTP:", error);
       setOtpState({
         type: "error",
         message: "Erreur lors de la vérification",
@@ -90,6 +106,7 @@ const RegisterForm = () => {
         url: ""
       });
     } catch (error) {
+      console.error("Erreur lors du renvoi OTP:", error);
       setOtpState({
         type: "error",
         message: "Erreur lors du renvoi",
@@ -104,23 +121,40 @@ const RegisterForm = () => {
     }
   }, [otpState, router]);
 
+  // Débogage : afficher l'état actuel
+  useEffect(() => {
+    console.log("État actuel:", state);
+  }, [state]);
+
   return (
     <div className="w-full md:w-1/2 p-8">
       {!state.requiresOtp ? (
         <RegisterFormView
-          firstName={firstName}
-          setFirstName={setFirstName}
-          lastName={lastName}
-          setLastName={setLastName}
-          telephone={telephone}
-          setTelephone={setTelephone}
-          password={password}
-          setPassword={setPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-          state={state}
-          handleRegister={handleRegister}
-        />
+  firstName={firstName}
+  setFirstName={setFirstName}
+  lastName={lastName}
+  setLastName={setLastName}
+  nationalite={nationalite}
+  setNationalite={setNationalite}
+  ville={ville}
+  setVille={setVille}
+  pays={pays}
+  setPays={setPays}
+  cni={cni}
+  setCni={setCni}
+  dateNaissance={dateNaissance}
+  setDateNaissance={setDateNaissance}
+  adresse={adresse}
+  setAdresse={setAdresse}
+  telephone={telephone}
+  setTelephone={setTelephone}
+  password={password}
+  setPassword={setPassword}
+  confirmPassword={confirmPassword}
+  setConfirmPassword={setConfirmPassword}
+  state={state}
+  handleRegister={handleRegister}
+/>
       ) : (
         <RegisterOtpFormView
           otp={otp}

@@ -20,13 +20,15 @@ jobs:
           if [ "${GITHUB_REF##*/}" == "main" ]; then
             echo "ENV=production" >> $GITHUB_ENV
             echo "TAG=latest" >> $GITHUB_ENV
-            echo "DOMAIN=actionuniversalfab.com" >> $GITHUB_ENV
+            echo "COMPOSE_FILE=frontend-production.yml" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/main" >> $GITHUB_ENV
+            echo "API_URL=https://api.actionuniversalfab.com/api" >> $GITHUB_ENV
           else
             echo "ENV=staging" >> $GITHUB_ENV
             echo "TAG=staging" >> $GITHUB_ENV
-            echo "DOMAIN=staging-client.actionuniversalfab.com" >> $GITHUB_ENV
+            echo "COMPOSE_FILE=frontend-staging.yml" >> $GITHUB_ENV
             echo "REMOTE_PATH=/srv/frontend/staging" >> $GITHUB_ENV
+            echo "API_URL=https://api-staging.actionuniversalfab.com/api" >> $GITHUB_ENV
           fi
 
       - name: Login to Docker Hub
@@ -37,17 +39,20 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }} .
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ env.API_URL }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }} \
+            .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}
 
-      - name: Copy docker-compose.yml to server
+      - name: Copy docker-compose file to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "docker-compose.yml"
+          source: "${{ env.COMPOSE_FILE }}"
           target: "${{ env.REMOTE_PATH }}"
           strip_components: 0
 
@@ -60,14 +65,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            mkdir -p ${{ env.REMOTE_PATH }}
             cd ${{ env.REMOTE_PATH }}
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TAG }}
-            
-            # Variables de déploiement
-            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            export TAG=${{ env.TAG }}
-            export ENV=${{ env.ENV }}
-            export DOMAIN=${{ env.DOMAIN }}
-            
-            docker stack deploy -c docker-compose.yml frontend-${{ env.ENV }} --with-registry-auth
+            docker stack deploy -c ${{ env.COMPOSE_FILE }} frontend-${{ env.ENV }} --with-registry-auth
             docker image prune -f

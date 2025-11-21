@@ -11,13 +11,16 @@ export const verifyOtp = async (state: any, formData: FormData) => {
     const userId = formData.get("userId");
     const otpCode = formData.get("otp");
 
-
+   
 
     // Envoyer une requête pour vérifier l'OTP avec la structure attendue par votre backend
     const res = await axios.post(`${VERIFYOTP_URL}`, {
       userId,
       otpCode,
     });
+
+
+    
     if (!res.data || !res.data.user) {
       return {
         type: "error",
@@ -54,7 +57,12 @@ export const verifyOtp = async (state: any, formData: FormData) => {
       };
     }
   } catch (error: any) {
-    console.error("OTP verification error:", error);
+    console.error("=== ERREUR VÉRIFICATION OTP ===");
+    console.error("Message d'erreur:", error?.response?.data?.message);
+    console.error("Status:", error?.response?.status);
+    console.error("Données reçues:", error?.response?.data);
+    console.error("Erreur complète:", error);
+    
     return {
       type: "error",
       message: error?.response?.data?.message || "Erreur lors de la vérification OTP",

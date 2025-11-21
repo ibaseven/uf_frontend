@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: ibaseveni985/frontend:staging
+    env_file:
+      - .env
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik-public"
+
+        # Service - Port 3000 pour Next.js
+        - "traefik.http.services.frontend-staging.loadbalancer.server.port=3000"
+
+        # HTTPS Router
+        - "traefik.http.routers.frontend-staging-secure.rule=Host(`staging-client.actionuniversalfab.com`) || Host(`www.staging-client.actionuniversalfab.com`)"
+        - "traefik.http.routers.frontend-staging-secure.entrypoints=websecure"
+        - "traefik.http.routers.frontend-staging-secure.tls=true"
+        - "traefik.http.routers.frontend-staging-secure.tls.certresolver=leresolver"
+        - "traefik.http.routers.frontend-staging-secure.service=frontend-staging"
+
+        # HTTP Router avec redirection
+        - "traefik.http.routers.frontend-staging-http.rule=Host(`staging-client.actionuniversalfab.com`) || Host(`www.staging-client.actionuniversalfab.com`)"
+        - "traefik.http.routers.frontend-staging-http.entrypoints=web"
+        - "traefik.http.routers.frontend-staging-http.middlewares=redirect-to-https"
+
+        # Middleware redirect
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  traefik-public:
+    external: true

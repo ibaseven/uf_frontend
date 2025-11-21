@@ -1,6 +1,6 @@
 import React from 'react';
 
-//import logoright from "../../../../public/img/49d8b26e015a7e225b4d9e7d54de9596ff91defa.jpg";
+import logoright from "../../../../public/img/right.webp";
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -10,7 +10,7 @@ import RegisterForm from './_components/register-form';
 interface JWTPayload {
   data: {
     id: string;
-    role: 'admin' | 'actionnaire';
+    role: 'universalLab_Admin' | 'actionnaire';
   };
   iat: number;
   exp: number;
@@ -40,7 +40,7 @@ export default async function RegisterPage() {
     
     if (decoded && decoded.data && decoded.data.role) {
       // Redirection basée sur le rôle
-      if (decoded.data.role === 'admin') {
+      if (decoded.data.role === 'universalLab_Admin') {
         redirect("/dashboard/admin/actionnaire");
       } else if (decoded.data.role === 'actionnaire') {
         redirect("/dashboard/actionnaire");
@@ -53,13 +53,13 @@ export default async function RegisterPage() {
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
         <RegisterForm />
         <div className="hidden md:block md:w-1/2 relative">
-          {/* <Image
+           <Image
             src={logoright}
             alt="Image d'authentification"
             layout="fill"
             objectFit="cover"
             className="absolute inset-0"
-          /> */}
+          /> 
         </div>
       </div>
     </div>
