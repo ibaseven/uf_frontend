@@ -80,7 +80,7 @@ export const RegisterFormView = ({
       </div>
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Créer un compte</h2>
-        <p className="text-gray-600">Inscrivez-vous sur Dioko</p>
+        <p className="text-gray-600">Inscrivez-vous sur Universall Fab</p>
       </div>
       <form action={handleRegister} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">

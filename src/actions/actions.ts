@@ -5,7 +5,8 @@ import { z } from 'zod';
 import { createdOrUpdated, fetchJSON } from '@/lib/api';
 import { 
   BUY_ACTIONS_URL,
-  GET_MY_ACTIONS_PURCHASES_URL 
+  GET_MY_ACTIONS_PURCHASES_URL, 
+  UPDATE_PROFILE_URL
 } from '@/lib/endpoint';
 
 const BuyActionsSchema = z.object({
@@ -96,6 +97,71 @@ export const getMyActionsPurchases = async () => {
     return {
       type: "error",
       message: "Erreur lors de la récupération de vos achats"
+    };
+  }
+};
+
+export const updateProfile = async (state: any, formData: FormData) => {
+  try {
+    // Extraire les données du formulaire
+    const updateData: any = {};
+    
+    const firstName = formData.get("firstName");
+    const lastName = formData.get("lastName");
+    const email = formData.get("email");
+    const telephone = formData.get("telephone");
+    const adresse = formData.get("adresse");
+    const nationalite = formData.get("nationalite");
+    const ville = formData.get("ville");
+     const cni = formData.get("cni");
+    const pays = formData.get("pays");
+    const dateNaissance = formData.get("dateNaissance");
+
+    // N'ajouter que les champs qui ont été fournis
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (email) updateData.email = email;
+     if (cni) updateData.cni = cni;
+    if (telephone) updateData.telephone = telephone;
+    if (adresse) updateData.adresse = adresse;
+    if (nationalite) updateData.nationalite = nationalite;
+    if (ville) updateData.ville = ville;
+    if (pays) updateData.pays = pays;
+    if (dateNaissance) updateData.dateNaissance = dateNaissance;
+
+    // Appel à l'API via createdOrUpdated
+    const response = await createdOrUpdated({
+      url: UPDATE_PROFILE_URL,
+      data: updateData,
+      updated: true 
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message || "Profil mis à jour avec succès",
+        user: response.user
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Échec de la mise à jour du profil"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("❌ Erreur dans updateProfile:", error);
+    
+    if (error?.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+    
+    return {
+      type: "error",
+      message: "Une erreur s'est produite lors de la mise à jour du profil"
     };
   }
 };

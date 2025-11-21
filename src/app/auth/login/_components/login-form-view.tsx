@@ -41,7 +41,7 @@ export const LoginFormView = ({
         </div>
       </div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Welcome to Dioko</h2>
+        <h2 className="text-2xl font-bold mb-2">Welcome to Universall Fab</h2>
         <p className="text-gray-600">Connectez-vous</p>
       </div>
       <form action={handleLogin} className="space-y-6">
