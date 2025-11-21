@@ -147,7 +147,7 @@ const ActionsSaleModal: React.FC<ActionsSaleModalProps> = ({
             montant: parseFloat(montant)
           });
         }
-console.log(response);
+//console.log(response);
 
         setResult(response);
         setShowConfirmation(false);

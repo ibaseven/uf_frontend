@@ -1,3 +1,4 @@
+// _components/ByActions.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
 import {
@@ -14,7 +15,11 @@ import {
 } from 'lucide-react';
 import { buyActions } from '@/actions/actions';
 
-const BuyActionsView: React.FC = () => {
+interface BuyActionsViewProps {
+  pricePerAction: number;
+}
+
+const BuyActionsView: React.FC<BuyActionsViewProps> = ({ pricePerAction }) => {
   const [actionNumber, setActionNumber] = useState<number>(5);
   const [parrainPhone, setParrainPhone] = useState<string>('');
   const [hasParrain, setHasParrain] = useState<boolean>(false);
@@ -23,20 +28,17 @@ const BuyActionsView: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [showBuyModal, setShowBuyModal] = useState(false);
 
-  const PRICE_PER_ACTION = 20;
+  const PRICE_PER_ACTION = pricePerAction; // Utiliser le prix reçu en props
   const MIN_ACTIONS = 5;
   const STEP = 5;
 
   // Vérifier si l'utilisateur a déjà un parrain
   useEffect(() => {
-    // Vous pouvez faire un appel API ici pour vérifier si l'utilisateur a déjà un parrain
-    // Pour l'instant, on suppose qu'il n'en a pas
     checkIfHasParrain();
   }, []);
 
   const checkIfHasParrain = async () => {
-   
-    setHasParrain(false); // Changez selon votre logique
+    setHasParrain(false);
   };
 
   const formatAmount = (amount: number): string => {
@@ -166,7 +168,7 @@ const BuyActionsView: React.FC = () => {
         <div className="p-6">
           <div className="max-w-md mx-auto">
             
-            {/* Section Parrainage - Afficher uniquement si pas encore de parrain */}
+            {/* Section Parrainage */}
             {!hasParrain && (
               <div className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-center mb-3">
@@ -296,7 +298,7 @@ const BuyActionsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal de confirmation - Reste identique */}
+      {/* Modal de confirmation */}
       {showBuyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-md mx-auto shadow-2xl">

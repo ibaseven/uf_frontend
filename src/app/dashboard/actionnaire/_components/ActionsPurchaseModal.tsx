@@ -44,7 +44,7 @@ const ActionsPurchaseModal = ({
   useEffect(() => {
     if (userInfo?.telephonePartenaire && !isEditingPartner) {
       setTelephonePartenaire(userInfo.telephonePartenaire);
-      console.log('📱 Partenaire existant chargé:', userInfo.telephonePartenaire);
+      //console.log('📱 Partenaire existant chargé:', userInfo.telephonePartenaire);
     }
   }, [userInfo, isEditingPartner]);
 

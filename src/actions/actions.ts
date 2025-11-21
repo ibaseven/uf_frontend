@@ -6,6 +6,7 @@ import { createdOrUpdated, fetchJSON } from '@/lib/api';
 import { 
   BUY_ACTIONS_URL,
   GET_MY_ACTIONS_PURCHASES_URL, 
+  UPDATE_ACTION_PRICE_URL, 
   UPDATE_PROFILE_URL
 } from '@/lib/endpoint';
 
@@ -162,6 +163,61 @@ export const updateProfile = async (state: any, formData: FormData) => {
     return {
       type: "error",
       message: "Une erreur s'est produite lors de la mise à jour du profil"
+    };
+  }
+};
+
+
+const UpdateActionPriceSchema = z.object({
+  newPrice: z.number().positive("Le prix doit être positif")
+});
+
+export const updateActionPrice = async (formData: { newPrice: number }) => {
+  try {
+    const validation = UpdateActionPriceSchema.safeParse(formData);
+
+    if (!validation.success) {
+      return { 
+        type: "error", 
+        errors: validation.error.flatten().fieldErrors,
+        message: "Le prix doit être un nombre positif"
+      };
+    }
+
+    const validatedData = validation.data;
+
+    const response = await createdOrUpdated({
+      url: UPDATE_ACTION_PRICE_URL,
+      data: validatedData,
+      updated:true
+    });
+
+    if (response.message === "Prix des actions mis à jour avec succès.") {
+      return {
+        type: "success",
+        message: response.message,
+        pricePerAction: response.pricePerAction
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la mise à jour du prix"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans updateActionPrice:", error);
+    
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+    
+    return {
+      type: "error",
+      message: "Erreur lors de la mise à jour du prix"
     };
   }
 };

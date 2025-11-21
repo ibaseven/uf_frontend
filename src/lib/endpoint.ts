@@ -72,6 +72,8 @@ export const PAY_PROJECT_PARTICIPATION_URL = `${API_URL}/giveYourDividendToThePr
 export const BUY_ACTIONS_URL = `${API_URL}/buyActions`;
 export const GET_MY_ACTIONS_PURCHASES_URL = `${API_URL}/buyActions`;
 export const ADD_PROJECT_URL = `${API_URL}/createAnProject`;
+export const GET_ACTION_PRICE_URL = `${API_URL}/action/getPrice`;
+export const UPDATE_ACTION_PRICE_URL = `${API_URL}/action/price`;
 
 export const UPDATE_PROFILE_URL = `${API_URL}/updateProfile`;
 
