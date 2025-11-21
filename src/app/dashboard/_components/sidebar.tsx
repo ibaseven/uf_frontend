@@ -3,7 +3,7 @@
 
 import * as React from "react";
 
-//import logoDioko from "../../../../public/img/NewDiokoDeseign.png";
+import logoDioko from "../../../../public/img/logoUni.png";
 
 import {
   Sidebar,
@@ -36,14 +36,14 @@ const SidebarDashboard = ({ children, currentUser }: { children: React.ReactNode
                   className="flex items-center justify-center w-full"
                 >
                   <div className="w-full max-w-[120px]">
-                   {/*  <Image
+                     <Image
                       src={logoDioko}
                       alt="Dioko Pro Logo"
                       width={200}
                       height={50}
                       priority
                       className="object-contain"
-                    /> */}
+                    /> 
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
