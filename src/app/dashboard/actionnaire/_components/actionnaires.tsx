@@ -5,6 +5,7 @@ import { Share, DollarSign, User } from 'lucide-react';
 import PurchaseMethodSelector from './PurchaseMethodSelector';
 import ActionsSaleModal from './ActionsSaleModal';
 import { ActionsData, UserInfo } from '@/app/Schema/ActionnaireModel';
+import { formatAmount } from '../../../../lib/projectionUtils';
 
 interface ActionnaireUserViewProps {
   user: UserInfo;

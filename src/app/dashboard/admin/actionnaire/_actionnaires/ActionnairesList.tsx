@@ -758,7 +758,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
-                  console.log('Changement items par page:', e.target.value);
+                  //console.log('Changement items par page:', e.target.value);
                 }}
                 className="border border-gray-300 rounded px-2 py-1 text-sm"
               >

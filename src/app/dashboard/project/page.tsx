@@ -12,7 +12,7 @@ const PayProjectsPage = async () => {
     const response = await fetchJSON(GET_ACTIONNAIRES_URL_2);
     
     const projects = response.projects || [];
-    console.log('Projets récupérés:', projects);
+   // console.log('Projets récupérés:', projects);
 
     return <ProjectPaymentView projects={projects} />;
     
