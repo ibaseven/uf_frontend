@@ -42,7 +42,7 @@ export const addProject = async (formData: FormData) => {
     });
 
     const result = await response.json();
-    console.log(result);
+    //console.log(result);
 
     if (result.success && result.newProject) {
       return {

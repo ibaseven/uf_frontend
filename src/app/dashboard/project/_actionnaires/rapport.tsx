@@ -62,7 +62,7 @@ const ProjectPaymentView: React.FC<ProjectPaymentViewProps> = ({ projects: rawPr
     }));
   }, [rawProjects]);
 
-  console.log('Projets mappés dans ProjectPaymentView:', projects);
+  //console.log('Projets mappés dans ProjectPaymentView:', projects);
 
   // 🔥 UN SEUL PROJET SÉLECTIONNÉ (string au lieu de string[])
   const [selectedProject, setSelectedProject] = useState<string>('');

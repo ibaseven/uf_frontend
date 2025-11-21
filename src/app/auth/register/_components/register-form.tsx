@@ -55,7 +55,7 @@ const RegisterForm = () => {
 
       // Afficher un message de succès si l'OTP est requis
       if (result.requiresOtp) {
-        console.log("OTP requis, affichage du formulaire OTP");
+        //console.log("OTP requis, affichage du formulaire OTP");
       }
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
@@ -123,7 +123,7 @@ const RegisterForm = () => {
 
   // Débogage : afficher l'état actuel
   useEffect(() => {
-    console.log("État actuel:", state);
+    //console.log("État actuel:", state);
   }, [state]);
 
   return (
