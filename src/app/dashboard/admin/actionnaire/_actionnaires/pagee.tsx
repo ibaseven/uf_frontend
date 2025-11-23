@@ -352,7 +352,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
         }
 
         const result = await updateUserInfo(dataToSend);
-console.log(result);
+//console.log(result);
 
         if (result.type === 'success') {
           setMessage({ type: 'success', text: result.message || 'Mise à jour réussie' });
