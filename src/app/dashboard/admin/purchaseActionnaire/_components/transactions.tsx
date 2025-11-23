@@ -638,11 +638,11 @@ const TransactionsAdaptedViewBYAdmin: React.FC<TransactionsViewProps> = ({
                       <div className="flex items-center">
                         <User className="w-4 h-4 mr-2 text-gray-400" />
                         <span className="font-medium mr-2">Utilisateur:</span>
-                        <span>{transaction.userId.firstName} {transaction.userId.lastName}</span>
+                        <span>{transaction.userId?.firstName} {transaction.userId?.lastName}</span>
                       </div>
                       <div className="flex items-center">
                         <span className="font-medium mr-2">Téléphone:</span>
-                        <span>{transaction.userId.telephone}</span>
+                        <span>{transaction.userId?.telephone}</span>
                       </div>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-2 text-gray-400" />

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useMemo, useEffect } from 'react';
 import { 
   Share, 
   DollarSign, 
@@ -22,29 +22,37 @@ import {
   Mail,
   Menu,
   ChevronDown,
-  Trash2,  // ← Nouvelle icône pour la suppression
-  UserMinus  // ← Nouvelle icône pour la suppression multiple
+  Trash2,
+  UserMinus,
+  MapPin,
+  Globe,
+  CreditCard,
+  Cake
 } from 'lucide-react';
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import CreateActionnaireModal from './CreateActionnaireModal';
-import AddNewYearModal from './AddNewYearModal';
+import { useRouter } from 'next/navigation';
 import ActionnairesList from './ActionnairesList';
+import { updateUserInfo } from '@/actions/actionnaires';
 
-// Types (ajout de selectedUsers)
+// Types
 interface Actionnaire {
-  id: string;
+  _id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   telephone: string;
-  nbre_actions: number;
-  dividende_actuel: number;
+  actionsNumber: number;
   dividende: number;
   isBlocked: boolean;
-  status: string;
+  role: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  adresse?: string;
+  ville?: string;
+  pays?: string;
+  nationalite?: string;
+  cni?: string;
+  dateNaissance?: string;
 }
 
 interface Statistiques {
@@ -55,35 +63,9 @@ interface Statistiques {
   total_dividendes: number;
 }
 
-interface EntrepriseInfo {
-  annee: number;
-  benefice: number;
-  formule: string;
-  rapport: string;
-  mode_calcul?: 'annee_unique' | 'cumule';
-}
-
-interface AnneeInfo {
-  annee: number;
-  benefice: number;
-  rapport: string;
-  createdAt: string;
-}
-
-interface ResumeGlobal {
-  nombre_annees: number;
-  total_benefices_toutes_annees: number;
-  premiere_annee: number | null;
-  derniere_annee: number | null;
-  moyenne_benefice_par_annee: number;
-}
-
 interface ActionnairesAdminViewProps {
   actionnaires: Actionnaire[];
   statistiques: Statistiques;
-  entreprise_info: EntrepriseInfo | null;
-  toutes_annees: AnneeInfo[];
-  resume_global: ResumeGlobal;
 }
 
 interface EditForm {
@@ -91,44 +73,49 @@ interface EditForm {
   lastName: string;
   telephone: string;
   dividende: number;
-  nbre_actions: number;
-  isBlocked: boolean;
+  adresse: string;
+  ville: string;
+  pays: string;
+  nationalite: string;
+  cni: string;
+  dateNaissance: string;
+}
+
+interface Message {
+  type: 'success' | 'error';
+  text: string;
 }
 
 const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({ 
   actionnaires, 
-  statistiques, 
-  entreprise_info,
-  toutes_annees,
-  resume_global
+  statistiques
 }) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   
-  const selectedYear = searchParams.get('annee') ? Number(searchParams.get('annee')) : 'all';
-  
+  // States
   const [filter, setFilter] = useState<'all' | 'active' | 'blocked'>('all');
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [message, setMessage] = useState<Message | null>(null);
   const [isPending, startTransition] = useTransition();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showNewYearModal, setShowNewYearModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Actionnaire | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     firstName: '',
     lastName: '',
     telephone: '',
-    nbre_actions: 0,
     dividende: 0,
-    isBlocked: false
+    adresse: '',
+    ville: '',
+    pays: '',
+    nationalite: '',
+    cni: '',
+    dateNaissance: ''
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // ← NOUVEAUX ÉTATS pour la gestion de la sélection
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'single' | 'multiple', userId?: string, userName?: string } | null>(null);
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -154,7 +141,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     });
   };
 
-  // ← NOUVELLES FONCTIONS pour la gestion de la sélection
+  // Fonctions pour la gestion de la sélection
   const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev => 
       prev.includes(userId) 
@@ -180,229 +167,89 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     }
   };
 
-  // ← NOUVELLE FONCTION pour supprimer un utilisateur unique
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    try {
-      // Demander confirmation
-   
+  // Fonction pour demander confirmation de suppression
+  const requestDeleteConfirmation = (type: 'single' | 'multiple', userId?: string, userName?: string) => {
+    setDeleteTarget({ type, userId, userName });
+    setShowDeleteConfirm(true);
+  };
 
-      startTransition(async () => {
-        try {
-          const result = await deleteUser({ userId });
+  // Fonction pour supprimer un utilisateur unique
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    requestDeleteConfirmation('single', userId, userName);
+  };
+
+/*   // Fonction pour supprimer plusieurs utilisateurs
+  const handleDeleteMultipleUsers = () => {
+    if (selectedUsers.length === 0) return;
+    requestDeleteConfirmation('multiple');
+  };
+
+  // Fonction pour confirmer et exécuter la suppression
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    startTransition(async () => {
+      try {
+        if (deleteTarget.type === 'single' && deleteTarget.userId) {
+          const result = await deleteUser({ userId: deleteTarget.userId });
 
           if (result.type === 'success') {
             setMessage({ 
               type: 'success', 
-              text: `${userName} a été supprimé avec succès` 
+              text: `${deleteTarget.userName || 'L\'utilisateur'} a été supprimé avec succès` 
             });
             router.refresh();
           } else {
-            setMessage({ type: 'error', text: result.message });
+            setMessage({ type: 'error', text: result.message || 'Erreur lors de la suppression' });
           }
-        } catch (error) {
-          setMessage({ 
-            type: 'error', 
-            text: 'Erreur lors de la suppression de l\'utilisateur' 
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Une erreur est survenue lors de la suppression' 
-      });
-    }
-  };
-
-  // ← NOUVELLE FONCTION pour supprimer plusieurs utilisateurs
-  const handleDeleteMultipleUsers = async () => {
-    try {
-      if (selectedUsers.length === 0) {
-        setMessage({ type: 'error', text: 'Aucun utilisateur sélectionné' });
-        return;
-      }
-
-    
-
-      startTransition(async () => {
-        try {
+        } else if (deleteTarget.type === 'multiple') {
           const result = await deleteMultipleUsers({ userIds: selectedUsers });
 
           if (result.type === 'success') {
-            const deletedCount = result.summary?.successfully_deleted || 0;
-            const notFoundCount = result.summary?.not_found || 0;
-            
-            let message = `${deletedCount} utilisateur(s) supprimé(s) avec succès`;
-            if (notFoundCount > 0) {
-              message += ` (${notFoundCount} non trouvé(s))`;
-            }
-            
-            setMessage({ type: 'success', text: message });
-            
-            // Réinitialiser la sélection
-            clearSelection();
+            setMessage({ 
+              type: 'success', 
+              text: `${selectedUsers.length} utilisateur(s) supprimé(s) avec succès` 
+            });
+            setSelectedUsers([]);
+            setIsSelectionMode(false);
             router.refresh();
           } else {
-            setMessage({ type: 'error', text: result.message });
+            setMessage({ type: 'error', text: result.message || 'Erreur lors de la suppression multiple' });
           }
-        } catch (error) {
-          setMessage({ 
-            type: 'error', 
-            text: 'Erreur lors de la suppression multiple' 
-          });
         }
-      });
-    } catch (error) {
-      console.error('Erreur suppression multiple:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Une erreur est survenue lors de la suppression multiple' 
-      });
-    }
-  };
-
-  // Nouvelle fonction pour gérer le changement d'année
-  const handleYearChange = (year: number | 'all') => {
-    const current = new URLSearchParams(Array.from(searchParams.entries()));
-    
-    if (year === 'all') {
-      current.delete('annee');
-    } else {
-      current.set('annee', year.toString());
-    }
-    
-    const search = current.toString();
-    const query = search ? `?${search}` : '';
-    
-    router.push(`${pathname}${query}`);
-  };
-
-  const handleDownloadRapport = async (fileName: string, annee: number) => {
-    try {
-      setMessage({ type: 'success', text: `Téléchargement du rapport ${annee} en cours...` });
-      
-      // Utiliser l'endpoint existant pour télécharger
-      const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/entreprises/download/${fileName}`;
-      window.open(downloadUrl, '_blank');
-      
-      setMessage({ 
-        type: 'success', 
-        text: `Rapport de l'année ${annee} téléchargé avec succès !` 
-      });
-
-    } catch (error) {
-      console.error('Erreur téléchargement rapport:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Erreur lors du téléchargement du rapport ${annee}` 
-      });
-    }
-  };
-
-  // Ajouter une nouvelle année
-  const handleAddNewYear = async (formData) => {
-    return new Promise((resolve) => {
-      startTransition(async () => {
-        try {
-          const result = await addNewYearBenefices(formData);
-          
-          // S'assurer qu'on retourne toujours un objet avec type
-          if (!result || typeof result !== 'object') {
-            const errorResult = {
-              type: "error",
-              message: "Réponse invalide du serveur"
-            };
-            setMessage({ type: 'error', text: errorResult.message });
-            resolve(errorResult);
-            return;
-          }
-          
-          // Si pas de type défini, traiter comme erreur
-          if (!result.type) {
-            const errorResult = {
-              type: "error",
-              message: result.message || "Erreur inconnue lors de l'ajout de la nouvelle année"
-            };
-            setMessage({ type: 'error', text: errorResult.message });
-            resolve(errorResult);
-            return;
-          }
-          
-          // Traiter les résultats selon le type
-          if (result.type === 'success') {
-            setMessage({ type: 'success', text: result.message });
-            // Attendre un peu avant de refresh pour que l'utilisateur voie le message
-            setTimeout(() => {
-              router.refresh();
-            }, 1000);
-          } else {
-            setMessage({ type: 'error', text: result.message });
-          }
-          
-          resolve(result);
-          
-        } catch (error) {
-          console.error("Erreur dans handleAddNewYear:", error);
-          const errorResult = {
-            type: "error",
-            message: error instanceof Error ? error.message : "Erreur lors de l'ajout de la nouvelle année"
-          };
-          setMessage({ type: 'error', text: errorResult.message });
-          resolve(errorResult);
-        }
-      });
+      } catch (error) {
+        console.error('Erreur suppression:', error);
+        setMessage({ 
+          type: 'error', 
+          text: 'Une erreur est survenue lors de la suppression' 
+        });
+      } finally {
+        setShowDeleteConfirm(false);
+        setDeleteTarget(null);
+      }
     });
+  }; */
+
+  // Annuler la suppression
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTarget(null);
   };
 
-  const handleCreateActionnaire = async (formData) => {
-    return new Promise((resolve) => {
-      startTransition(async () => {
-        try {
-          const result = await createNewActionnaire(formData);
-
-          if (!result || typeof result !== 'object') {
-            const errorResult = {
-              type: "error",
-              message: "Réponse invalide du serveur"
-            };
-            setMessage({ type: 'error', text: errorResult.message });
-            resolve(errorResult);
-            return;
-          }
-
-          if (result.type === 'success') {
-            setMessage({ type: 'success', text: result.message });
-            setTimeout(() => {
-              router.refresh();
-            }, 1000);
-          } else {
-            setMessage({ type: 'error', text: result.message });
-          }
-          
-          resolve(result);
-        } catch (error) {
-          console.error("Erreur dans handleCreateActionnaire:", error);
-          const errorResult = {
-            type: "error",
-            message: "Erreur lors de la création de l'actionnaire"
-          };
-          setMessage({ type: 'error', text: errorResult.message });
-          resolve(errorResult);
-        }
-      });
-    });
-  };
-
+  // Ouvrir le modal d'édition
   const handleEditUser = (actionnaire: Actionnaire) => {
     setEditingUser(actionnaire);
     setEditForm({
       firstName: actionnaire.firstName || '',
       lastName: actionnaire.lastName || '',
       telephone: actionnaire.telephone || '',
-      nbre_actions: actionnaire.nbre_actions || 0,
-      dividende: actionnaire.dividende_actuel || 0,
-      isBlocked: actionnaire.isBlocked || false
+      dividende: actionnaire.dividende || 0,
+      adresse: actionnaire.adresse || '',
+      ville: actionnaire.ville || '',
+      pays: actionnaire.pays || '',
+      nationalite: actionnaire.nationalite || '',
+      cni: actionnaire.cni || '',
+      dateNaissance: actionnaire.dateNaissance || ''
     });
     setEditErrors({});
     setShowEditModal(true);
@@ -416,24 +263,26 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
       firstName: '',
       lastName: '',
       telephone: '',
-      nbre_actions: 0,
       dividende: 0,
-      isBlocked: false
+      adresse: '',
+      ville: '',
+      pays: '',
+      nationalite: '',
+      cni: '',
+      dateNaissance: ''
     });
     setEditErrors({});
   };
 
   // Gérer les changements dans le formulaire d'édition
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     
     setEditForm(prev => ({
       ...prev,
-      [name]: type === 'checkbox' 
-        ? checked 
-        : type === 'number' 
-          ? (value === '' ? 0 : Number(value))
-          : value || ''
+      [name]: type === 'number' 
+        ? (value === '' ? 0 : parseFloat(value))
+        : value || ''
     }));
     
     // Supprimer l'erreur pour ce champ
@@ -446,11 +295,8 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     }
   };
 
-  // Sauvegarder les modifications
-  const handleSaveUser = async () => {
-    if (!editingUser) return;
-
-    // Validation côté client avec vérifications de sécurité
+  // Valider le formulaire d'édition
+  const validateEditForm = (): boolean => {
     const errors: Record<string, string> = {};
     
     if (!editForm.firstName || !editForm.firstName.trim()) {
@@ -459,75 +305,75 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     if (!editForm.lastName || !editForm.lastName.trim()) {
       errors.lastName = 'Le nom est requis';
     }
-   
     if (!editForm.telephone || !editForm.telephone.trim()) {
       errors.telephone = 'Le téléphone est requis';
+    } else if (!/^[+]?[\d\s-()]+$/.test(editForm.telephone.trim())) {
+      errors.telephone = 'Format de téléphone invalide';
     }
-    if (typeof editForm.nbre_actions !== 'number' || editForm.nbre_actions < 0) {
-      errors.nbre_actions = 'Le nombre d\'actions ne peut pas être négatif';
+    if (editForm.dividende < 0) {
+      errors.dividende = 'Le dividende ne peut pas être négatif';
     }
 
-    if (Object.keys(errors).length > 0) {
-      setEditErrors(errors);
+    setEditErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Sauvegarder les modifications
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+
+    // Validation côté client
+    if (!validateEditForm()) {
       return;
     }
 
     startTransition(async () => {
       try {
-        // Construire les données à envoyer intelligemment
+        // Construire les données à envoyer avec TOUS les champs
         const dataToSend: any = {
-          userId: editingUser.id,
+          userId: editingUser._id,
           firstName: editForm.firstName.trim(),
           lastName: editForm.lastName.trim(),
           telephone: editForm.telephone.trim(),
-          isBlocked: editForm.isBlocked
+          adresse: editForm.adresse.trim() || undefined,
+          ville: editForm.ville.trim() || undefined,
+          pays: editForm.pays.trim() || undefined,
+          nationalite: editForm.nationalite.trim() || undefined,
+          cni: editForm.cni.trim() || undefined,
+          dateNaissance: editForm.dateNaissance || undefined
         };
 
-        // Vérifier si nbre_actions a changé
-        const actionsChanged = editForm.nbre_actions !== editingUser.nbre_actions;
-        
         // Vérifier si dividende a changé
-        const dividendeChanged = editForm.dividende !== editingUser.dividende_actuel;
+        const dividendeChanged = editForm.dividende !== editingUser.dividende;
 
-        // Logique intelligente d'envoi
-        if (actionsChanged && dividendeChanged) {
-          // Les deux ont changé → Priorité aux actions (recalcul auto)
-          dataToSend.nbre_actions = editForm.nbre_actions;
-        
-        } else if (actionsChanged) {
-          // Seulement les actions ont changé → Recalcul auto
-          dataToSend.nbre_actions = editForm.nbre_actions;
-     
-        } else if (dividendeChanged) {
-          // Seulement le dividende a changé → Valeur manuelle
+        // Si dividende a changé, l'inclure dans l'envoi
+        if (dividendeChanged) {
           dataToSend.dividende = editForm.dividende;
-        
         }
 
         const result = await updateUserInfo(dataToSend);
+console.log(result);
 
         if (result.type === 'success') {
-          setMessage({ type: 'success', text: result.message });
+          setMessage({ type: 'success', text: result.message || 'Mise à jour réussie' });
           closeEditModal();
           router.refresh();
         } else {
           if (result.errors) {
             setEditErrors(result.errors);
           } else {
-            setMessage({ type: 'error', text: result.message });
+            setMessage({ type: 'error', text: result.message || 'Erreur lors de la mise à jour' });
           }
         }
       } catch (error) {
+        console.error('Erreur mise à jour:', error);
         setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
       }
     });
   };
 
-  // Fonction pour basculer le statut d'un actionnaire
-
-
   // Filtrer les actionnaires selon le filtre sélectionné
-  const filteredActionnaires = React.useMemo(() => {
+  const filteredActionnaires = useMemo(() => {
     return actionnaires.filter(actionnaire => {
       if (filter === 'active') return !actionnaire.isBlocked;
       if (filter === 'blocked') return actionnaire.isBlocked;
@@ -535,13 +381,63 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     });
   }, [actionnaires, filter]);
 
+  // Calculer les statistiques filtrées
+  const filteredStats = useMemo(() => {
+    const totalActions = filteredActionnaires.reduce((sum, a) => sum + (a.actionsNumber || 0), 0);
+    const totalDividendes = filteredActionnaires.reduce((sum, a) => sum + (a.dividende || 0), 0);
+    const moyenneDividende = filteredActionnaires.length > 0 ? totalDividendes / filteredActionnaires.length : 0;
+
+    return {
+      totalActions,
+      totalDividendes,
+      moyenneDividende
+    };
+  }, [filteredActionnaires]);
+
   // Auto-hide message après 5 secondes
-  React.useEffect(() => {
+  useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  // Exporter en CSV
+  const handleExportCSV = () => {
+    try {
+      const dataToExport = filter === 'all' ? actionnaires : filteredActionnaires;
+      
+      const headers = ['Prénom', 'Nom', 'Téléphone', 'Email', 'Actions', 'Dividende', 'Statut', 'Date création'];
+      const csvContent = [
+        headers.join(','),
+        ...dataToExport.map(a => [
+          a.firstName,
+          a.lastName,
+          a.telephone,
+          a.email || '',
+          a.actionsNumber,
+          a.dividende,
+          a.isBlocked ? 'Bloqué' : 'Actif',
+          formatDate(a.createdAt)
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `actionnaires_${filter}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setMessage({ type: 'success', text: 'Export CSV réussi' });
+    } catch (error) {
+      console.error('Erreur export CSV:', error);
+      setMessage({ type: 'error', text: 'Erreur lors de l\'export CSV' });
+    }
+  };
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 bg-gray-50 min-h-screen">
@@ -559,6 +455,12 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
             )}
             <span className="text-sm sm:text-base">{message.text}</span>
+            <button 
+              onClick={() => setMessage(null)}
+              className="ml-auto text-current hover:opacity-70"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
@@ -586,26 +488,6 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
           {/* Desktop buttons */}
           <div className="hidden sm:flex space-x-3">
             <button
-              onClick={() => setShowNewYearModal(true)}
-              disabled={isPending}
-              className="flex items-center px-3 lg:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              <span className="hidden lg:inline">Nouvelle année</span>
-              <span className="lg:hidden">Année</span>
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              disabled={isPending}
-              className="flex items-center px-3 lg:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              <span className="hidden lg:inline">Créer un actionnaire</span>
-              <span className="lg:hidden">Créer</span>
-            </button>
-            
-            {/* ← NOUVEAUX BOUTONS pour la sélection et suppression */}
-            <button
               onClick={toggleSelectionMode}
               disabled={isPending}
               className={`flex items-center px-3 lg:px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
@@ -622,37 +504,12 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 {isSelectionMode ? 'Annuler' : 'Sélection'}
               </span>
             </button>
-           
           </div>
         </div>
 
         {/* Mobile action buttons */}
         {isMobileMenuOpen && (
           <div className="mt-4 sm:hidden space-y-2">
-            <button
-              onClick={() => {
-                setShowNewYearModal(true);
-                setIsMobileMenuOpen(false);
-              }}
-              disabled={isPending}
-              className="w-full flex items-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Calendar className="w-4 h-4 mr-3" />
-              Nouvelle année
-            </button>
-            <button
-              onClick={() => {
-                setShowCreateModal(true);
-                setIsMobileMenuOpen(false);
-              }}
-              disabled={isPending}
-              className="w-full flex items-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <UserPlus className="w-4 h-4 mr-3" />
-              Créer un actionnaire
-            </button>
-            
-            {/* ← NOUVEAUX BOUTONS MOBILE pour la sélection */}
             <button
               onClick={() => {
                 toggleSelectionMode();
@@ -668,12 +525,11 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
               <UserMinus className="w-4 h-4 mr-3" />
               {isSelectionMode ? 'Annuler sélection' : 'Sélection multiple'}
             </button>
-           
           </div>
         )}
       </div>
 
-      {/* ← NOUVELLE BARRE pour la sélection multiple */}
+      {/* Barre de sélection multiple */}
       {isSelectionMode && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -691,7 +547,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
               )}
             </div>
             
-            <div className="flex space-x-2">
+           {/*  <div className="flex space-x-2">
               {selectedUsers.length > 0 && (
                 <button
                   onClick={handleDeleteMultipleUsers}
@@ -710,7 +566,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 <X className="w-4 h-4 mr-2" />
                 Annuler
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}
@@ -766,84 +622,6 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
         </div>
       </div>
 
-      {/* Informations entreprise - Section condensée pour économiser l'espace */}
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
-          <h3 className="text-lg font-semibold text-gray-900">Informations Entreprise</h3>
-          
-          {/* Sélecteur d'année */}
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-            <label className="text-sm font-medium text-gray-700">
-              Année à afficher:
-            </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => handleYearChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Résumé global</option>
-              {toutes_annees.map((annee) => (
-                <option key={annee.annee} value={annee.annee}>
-                  Année {annee.annee}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {selectedYear === 'all' ? (
-          // Vue résumé global condensée
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Années</p>
-              <p className="text-lg font-bold text-blue-600">{resume_global.nombre_annees}</p>
-            </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Total bénéfices</p>
-              <p className="text-sm font-bold text-green-600 truncate">{formatAmount(resume_global.total_benefices_toutes_annees)}</p>
-            </div>
-            <div className="text-center p-3 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Moyenne/an</p>
-              <p className="text-sm font-bold text-yellow-600 truncate">{formatAmount(resume_global.moyenne_benefice_par_annee)}</p>
-            </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Période</p>
-              <p className="text-sm font-bold text-purple-600">
-                {resume_global.premiere_annee} - {resume_global.derniere_annee}
-              </p>
-            </div>
-          </div>
-        ) : (
-          // Vue spécifique à une année condensée
-          entreprise_info && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Année</p>
-                <p className="font-semibold text-blue-600">{entreprise_info.annee}</p>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Bénéfice</p>
-                <p className="font-semibold text-green-600 truncate">{formatAmount(entreprise_info.benefice)}</p>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Rapport</p>
-                {entreprise_info.rapport ? (
-                  <button
-                    onClick={() => handleDownloadRapport(entreprise_info.rapport, entreprise_info.annee)}
-                    disabled={isPending}
-                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                  >
-                    Télécharger
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400">Aucun</span>
-                )}
-              </div>
-            </div>
-          )
-        )}
-      </div>
-
       {/* Filtres */}
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -880,7 +658,6 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
             </button>
           </div>
 
-          {/* Indicateur de filtrage actif */}
           {filter !== 'all' && (
             <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg">
               <AlertCircle className="w-4 h-4 mr-2" />
@@ -899,26 +676,67 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
         </div>
       </div>
 
-      {/* ← MODIFICATION de la liste des actionnaires avec sélection et suppression */}
+      {/* Liste des actionnaires */}
       <ActionnairesList
         actionnaires={filteredActionnaires}
         onEditUser={handleEditUser}
-       
-        onDeleteUser={handleDeleteUser}  // ← Nouvelle prop
+        onDeleteUser={handleDeleteUser}
         isPending={isPending}
         formatAmount={formatAmount}
         formatActions={formatActions}
         formatDate={formatDate}
         currentFilter={filter}
-        isSelectionMode={isSelectionMode}  // ← Nouvelle prop
-        selectedUsers={selectedUsers}  // ← Nouvelle prop
-        onToggleUserSelection={toggleUserSelection}  // ← Nouvelle prop
+        isSelectionMode={isSelectionMode}
+        selectedUsers={selectedUsers}
+        onToggleUserSelection={toggleUserSelection}
       />
 
-      {/* Modal d'édition */}
+      {/* Modal de confirmation de suppression */}
+    {/*   {showDeleteConfirm && deleteTarget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="p-3 rounded-full bg-red-100">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-bold text-gray-900">
+                  Confirmer la suppression
+                </h3>
+              </div>
+              
+              <p className="text-gray-600 mb-6">
+                {deleteTarget.type === 'single' 
+                  ? `Êtes-vous sûr de vouloir supprimer ${deleteTarget.userName || 'cet utilisateur'} ? Cette action est irréversible.`
+                  : `Êtes-vous sûr de vouloir supprimer ${selectedUsers.length} utilisateur(s) ? Cette action est irréversible.`
+                }
+              </p>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelDelete}
+                  disabled={isPending}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isPending}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isPending ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )} */}
+
+      {/* Modal d'édition - VERSION COMPLÈTE */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -933,148 +751,277 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Prénom */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prénom
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={editForm.firstName}
-                        onChange={handleEditInputChange}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          editErrors.firstName ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {editErrors.firstName && (
-                      <p className="text-red-500 text-xs mt-1">{editErrors.firstName}</p>
-                    )}
-                  </div>
-
-                  {/* Nom */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nom
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={editForm.lastName}
-                        onChange={handleEditInputChange}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          editErrors.lastName ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {editErrors.lastName && (
-                      <p className="text-red-500 text-xs mt-1">{editErrors.lastName}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Téléphone */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Téléphone
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="tel"
-                        name="telephone"
-                        value={editForm.telephone}
-                        onChange={handleEditInputChange}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          editErrors.telephone ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {editErrors.telephone && (
-                      <p className="text-red-500 text-xs mt-1">{editErrors.telephone}</p>
-                    )}
-                  </div>
-
-                  {/* Dividende */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dividende
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="number"
-                        name="dividende"
-                        value={editForm.dividende}
-                        onChange={handleEditInputChange}
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          editErrors.dividende ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {editErrors.dividende && (
-                      <p className="text-red-500 text-xs mt-1">{editErrors.dividende}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  {/* Nombre d'actions */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre d'actions
-                    </label>
-                    <div className="relative">
-                      <Share className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="number"
-                        name="nbre_actions"
-                        value={editForm.nbre_actions}
-                        onChange={handleEditInputChange}
-                        min="0"
-                        step="0.1"
-                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          editErrors.nbre_actions ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {editErrors.nbre_actions && (
-                      <p className="text-red-500 text-xs mt-1">{editErrors.nbre_actions}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Les dividendes seront recalculés automatiquement si vous modifiez le nombre d'actions
-                    </p>
-                  </div>
-                </div>
-
-                {/* Statut bloqué */}
+              <div className="space-y-6">
+                {/* Section: Informations Personnelles */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Statut du compte
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="isBlocked"
-                      checked={editForm.isBlocked}
-                      onChange={handleEditInputChange}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <label className="ml-2 text-sm text-gray-700">
-                      Compte bloqué
-                    </label>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <User className="w-5 h-5 mr-2 text-blue-600" />
+                    Informations Personnelles
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Prénom */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Prénom <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={editForm.firstName}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.firstName ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Entrez le prénom"
+                        />
+                      </div>
+                      {editErrors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.firstName}</p>
+                      )}
+                    </div>
+
+                    {/* Nom */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nom <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={editForm.lastName}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.lastName ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Entrez le nom"
+                        />
+                      </div>
+                      {editErrors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.lastName}</p>
+                      )}
+                    </div>
+
+                    {/* Téléphone */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Téléphone <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="tel"
+                          name="telephone"
+                          value={editForm.telephone}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.telephone ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="+221 77 123 45 67"
+                        />
+                      </div>
+                      {editErrors.telephone && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.telephone}</p>
+                      )}
+                    </div>
+
+                    {/* Date de naissance */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date de naissance
+                      </label>
+                      <div className="relative">
+                        <Cake className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="date"
+                          name="dateNaissance"
+                          value={editForm.dateNaissance}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Un compte bloqué ne peut pas se connecter
-                  </p>
+                </div>
+
+                {/* Section: Identité */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
+                    Identité
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* CNI */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CNI / Passeport
+                      </label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="cni"
+                          value={editForm.cni}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Numéro CNI/Passeport"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nationalité */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nationalité
+                      </label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="nationalite"
+                          value={editForm.nationalite}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Ex: Sénégalaise"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Localisation */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                    Localisation
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Adresse */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Adresse
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="adresse"
+                          value={editForm.adresse}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Ex: Rue 10, Quartier Médina"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Ville */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ville
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            name="ville"
+                            value={editForm.ville}
+                            onChange={handleEditInputChange}
+                            disabled={isPending}
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder="Ex: Dakar"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Pays */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Pays
+                        </label>
+                        <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            name="pays"
+                            value={editForm.pays}
+                            onChange={handleEditInputChange}
+                            disabled={isPending}
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder="Ex: Sénégal"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Finances */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
+                    Finances
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Dividende */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dividende (XOF)
+                      </label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="number"
+                          name="dividende"
+                          value={editForm.dividende}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          min="0"
+                          step="0.01"
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.dividende ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="0"
+                        />
+                      </div>
+                      {editErrors.dividende && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.dividende}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informations en lecture seule */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Informations du compte</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-600">Email:</span>
+                      <p className="font-medium">{editingUser.email || 'Non renseigné'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Actions:</span>
+                      <p className="font-medium">{formatActions(editingUser.actionsNumber)}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Date création:</span>
+                      <p className="font-medium">{formatDate(editingUser.createdAt)}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Rôle:</span>
+                      <p className="font-medium capitalize">{editingUser.role}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1099,30 +1046,6 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Modal de création d'actionnaire */}
-      <CreateActionnaireModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={() => {
-          setMessage({ type: 'success', text: 'Actionnaire créé avec succès !' });
-          router.refresh();
-        }}
-        isPending={isPending}
-        onCreateActionnaire={handleCreateActionnaire}
-      />
-
-      {/* Modal d'ajout nouvelle année */}
-      <AddNewYearModal
-        isOpen={showNewYearModal}
-        onClose={() => setShowNewYearModal(false)}
-        onSuccess={() => {
-          setMessage({ type: 'success', text: 'Nouvelle année ajoutée avec succès ! Dividendes recalculés.' });
-          router.refresh();
-        }}
-        isPending={isPending}
-        onAddNewYear={handleAddNewYear}
-      />
 
       {/* Résumé en bas */}
       <div className="mt-4 sm:mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
@@ -1152,7 +1075,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 <span className="font-semibold text-sm sm:text-base">
                   {filter === 'all' 
                     ? formatActions(statistiques.total_actions)
-                    : formatActions(filteredActionnaires.reduce((sum, a) => sum + a.nbre_actions, 0))
+                    : formatActions(filteredStats.totalActions)
                   }
                 </span>
               </div>
@@ -1163,7 +1086,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 <span className="font-semibold text-sm sm:text-base">
                   {filter === 'all' 
                     ? formatAmount(statistiques.total_dividendes)
-                    : formatAmount(filteredActionnaires.reduce((sum, a) => sum + a.dividende_actuel, 0))
+                    : formatAmount(filteredStats.totalDividendes)
                   }
                 </span>
               </div>
@@ -1174,9 +1097,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                     ? (statistiques.nombre_total_actionnaires > 0 
                         ? formatAmount(statistiques.total_dividendes / statistiques.nombre_total_actionnaires)
                         : formatAmount(0))
-                    : (filteredActionnaires.length > 0
-                        ? formatAmount(filteredActionnaires.reduce((sum, a) => sum + a.dividende_actuel, 0) / filteredActionnaires.length)
-                        : formatAmount(0))
+                    : formatAmount(filteredStats.moyenneDividende)
                   }
                 </span>
               </div>
@@ -1186,25 +1107,21 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Actions Rapides</h3>
             <div className="space-y-2">
               <button 
-                className="w-full flex items-center justify-start px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                onClick={() => {
-                  //('Export CSV...', filter, filteredActionnaires);
-                }}
+                onClick={handleExportCSV}
+                disabled={isPending || filteredActionnaires.length === 0}
+                className="w-full flex items-center justify-start px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Exporter {filter !== 'all' ? 'la sélection' : 'tout'} en CSV
               </button>
               <button 
-                className="w-full flex items-center justify-start px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                onClick={() => {
-                  //('Générer rapport...', filter, filteredActionnaires);
-                }}
+                disabled
+                className="w-full flex items-center justify-start px-3 py-2 text-sm text-gray-400 cursor-not-allowed rounded"
               >
                 <FileText className="w-4 h-4 mr-2" />
-                Générer rapport PDF
+                Générer rapport PDF (bientôt)
               </button>
-              {/* ← NOUVEAU bouton d'action rapide pour la suppression */}
-              {selectedUsers.length > 0 && (
+              {isSelectionMode && selectedUsers.length > 0 && (
                 <button 
                   className="w-full flex items-center justify-start px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
                   onClick={handleDeleteMultipleUsers}

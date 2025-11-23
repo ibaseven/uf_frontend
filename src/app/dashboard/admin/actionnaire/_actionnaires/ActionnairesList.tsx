@@ -7,37 +7,42 @@ import {
   AlertCircle,
   CheckCircle,
   Edit3,
-  Mail,
   Phone,
-  Trash2,
+ 
   Search,
   Filter,
   X,
   SortAsc,
-  SortDesc
+  SortDesc,
+  MapPin,
+  CreditCard,
+  Calendar,
+  Globe
 } from 'lucide-react';
 import Pagination from './Pagination';
 
-// Types
+// Types adaptés à votre BD
 interface Actionnaire {
-  id: string;
+  _id: string;
   firstName: string;
   lastName: string;
-  email: string;
   telephone: string;
-  nbre_actions: number;
-  dividende_actuel: number;
+  nationalite?: string;
+  ville?: string;
+  cni?: string;
+  dateNaissance?: string;
+  adresse?: string;
+  role: string;
   dividende: number;
-  isBlocked: boolean;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  actionsNumber: number;
+  isBlocked?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ActionnaireListProps {
   actionnaires: Actionnaire[];
   onEditUser: (actionnaire: Actionnaire) => void;
-
   onDeleteUser: (userId: string, userName: string) => void;
   isPending: boolean;
   formatAmount: (amount: number) => string;
@@ -49,7 +54,7 @@ interface ActionnaireListProps {
   onToggleUserSelection?: (userId: string) => void;
 }
 
-type SortField = 'name' | 'email' | 'actions' | 'dividende' | 'status' | 'date';
+type SortField = 'name' | 'telephone' | 'actions' | 'dividende' | 'status' | 'date';
 type SortDirection = 'asc' | 'desc';
 
 const ActionnairesList: React.FC<ActionnaireListProps> = ({
@@ -66,7 +71,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
   onToggleUserSelection
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 10;
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -100,13 +105,11 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
         const firstName = safeString(actionnaire.firstName).toLowerCase();
         const lastName = safeString(actionnaire.lastName).toLowerCase();
         const telephone = safeString(actionnaire.telephone);
-        const email = safeString(actionnaire.email).toLowerCase();
-        const id = safeString(actionnaire.id).toLowerCase();
+        const id = safeString(actionnaire._id).toLowerCase();
         
         return firstName.includes(search) ||
                lastName.includes(search) ||
                telephone.includes(search) ||
-               email.includes(search) ||
                id.includes(search);
       });
     }
@@ -122,17 +125,17 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
           aValue = aFullName;
           bValue = bFullName;
           break;
-        case 'email':
-          aValue = safeString(a.email).toLowerCase();
-          bValue = safeString(b.email).toLowerCase();
+        case 'telephone':
+          aValue = safeString(a.telephone).toLowerCase();
+          bValue = safeString(b.telephone).toLowerCase();
           break;
         case 'actions':
-          aValue = Number(a.nbre_actions) || 0;
-          bValue = Number(b.nbre_actions) || 0;
+          aValue = Number(a.actionsNumber) || 0;
+          bValue = Number(b.actionsNumber) || 0;
           break;
         case 'dividende':
-          aValue = Number(a.dividende_actuel) || 0;
-          bValue = Number(b.dividende_actuel) || 0;
+          aValue = Number(a.dividende) || 0;
+          bValue = Number(b.dividende) || 0;
           break;
         case 'status':
           aValue = a.isBlocked ? 1 : 0;
@@ -183,7 +186,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
 
   const handleDeleteClick = (actionnaire: Actionnaire) => {
     const userName = `${safeString(actionnaire.firstName)} ${safeString(actionnaire.lastName)}`.trim() || 'Utilisateur inconnu';
-    onDeleteUser(actionnaire.id, userName);
+    onDeleteUser(actionnaire._id, userName);
   };
 
   const getSortIcon = (field: SortField) => {
@@ -207,7 +210,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, téléphone ou ID..."
+                placeholder="Rechercher par nom, téléphone ou ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -238,7 +241,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 <span className="text-sm font-medium text-gray-700 mr-3">Trier par:</span>
                 {[
                   { field: 'name' as SortField, label: 'Nom' },
-                  { field: 'email' as SortField, label: 'Email' },
+                  { field: 'telephone' as SortField, label: 'Téléphone' },
                   { field: 'actions' as SortField, label: 'Actions' },
                   { field: 'dividende' as SortField, label: 'Dividende' },
                   { field: 'status' as SortField, label: 'Statut' },
@@ -339,7 +342,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Rechercher par nom, email, téléphone ou ID..."
+              placeholder="Rechercher par nom, téléphone ou ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -370,7 +373,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
               <span className="text-sm font-medium text-gray-700 mr-3">Trier par:</span>
               {[
                 { field: 'name' as SortField, label: 'Nom' },
-                { field: 'email' as SortField, label: 'Email' },
+                { field: 'telephone' as SortField, label: 'Téléphone' },
                 { field: 'actions' as SortField, label: 'Actions' },
                 { field: 'dividende' as SortField, label: 'Dividende' },
                 { field: 'status' as SortField, label: 'Statut' },
@@ -414,7 +417,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
                   Tri: {
                     sortField === 'name' ? 'Nom' :
-                    sortField === 'email' ? 'Email' :
+                    sortField === 'telephone' ? 'Téléphone' :
                     sortField === 'actions' ? 'Actions' :
                     sortField === 'dividende' ? 'Dividende' :
                     sortField === 'status' ? 'Statut' : 'Date'
@@ -469,11 +472,11 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-800">
                   <button
-                    onClick={() => handleSort('email')}
+                    onClick={() => handleSort('telephone')}
                     className="flex items-center hover:text-blue-600 transition-colors"
                   >
                     Contact
-                    {getSortIcon('email')}
+                    {getSortIcon('telephone')}
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-800">
@@ -525,13 +528,13 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 const displayName = fullName || 'Nom non défini';
                 
                 return (
-                  <tr key={actionnaire.id} className="hover:bg-gray-50">
+                  <tr key={actionnaire._id} className="hover:bg-gray-50">
                     {isSelectionMode && (
                       <td className="px-4 py-4 text-center">
                         <input
                           type="checkbox"
-                          checked={selectedUsers.includes(actionnaire.id)}
-                          onChange={() => handleUserSelection(actionnaire.id)}
+                          checked={selectedUsers.includes(actionnaire._id)}
+                          onChange={() => handleUserSelection(actionnaire._id)}
                           disabled={isPending}
                           className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
                         />
@@ -548,14 +551,26 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                             displayName
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {safeString(actionnaire.id).slice(-8) || 'N/A'}
+                        <div className="text-xs text-gray-500 space-y-1 mt-1">
+                          <div>ID: {safeString(actionnaire._id).slice(-8) || 'N/A'}</div>
+                          {actionnaire.nationalite && (
+                            <div className="flex items-center">
+                              <Globe className="w-3 h-3 mr-1" />
+                              {actionnaire.nationalite}
+                            </div>
+                          )}
+                          {actionnaire.ville && (
+                            <div className="flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {actionnaire.ville}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm text-gray-500">
+                      <div className="text-sm">
+                        <div className="text-gray-900">
                           {searchTerm ? (
                             <span dangerouslySetInnerHTML={{
                               __html: highlightSearchTerm(safeString(actionnaire.telephone), searchTerm)
@@ -564,16 +579,31 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                             safeString(actionnaire.telephone) || 'N/A'
                           )}
                         </div>
+                        {actionnaire.adresse && (
+                          <div className="text-xs text-gray-500 mt-1">{actionnaire.adresse}</div>
+                        )}
+                        {actionnaire.cni && (
+                          <div className="text-xs text-gray-500 flex items-center mt-1">
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            CNI: {actionnaire.cni}
+                          </div>
+                        )}
+                        {actionnaire.dateNaissance && (
+                          <div className="text-xs text-gray-500 flex items-center mt-1">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {formatDate(actionnaire.dateNaissance)}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatActions(actionnaire.nbre_actions || 0)}
+                        {formatActions(actionnaire.actionsNumber || 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatAmount(actionnaire.dividende_actuel || 0)}
+                        {formatAmount(actionnaire.dividende || 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -609,7 +639,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                           Modifier
                         </button>
                       
-                        <button
+                        {/* <button
                           onClick={() => handleDeleteClick(actionnaire)}
                           disabled={isPending}
                           className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -617,7 +647,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           Supprimer
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>
@@ -628,21 +658,21 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
         </div>
       </div>
 
-      {/* Vue Mobile/Tablette */}
+      {/* Vue Mobile/Tablette - AVEC TOUS LES CHAMPS */}
       <div className="lg:hidden space-y-3 sm:space-y-4">
         {currentActionnaires.map((actionnaire) => {
           const fullName = `${safeString(actionnaire.firstName)} ${safeString(actionnaire.lastName)}`.trim();
           const displayName = fullName || 'Nom non défini';
           
           return (
-            <div key={actionnaire.id} className="bg-white rounded-lg shadow p-4">
+            <div key={actionnaire._id} className="bg-white rounded-lg shadow p-4">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-start space-x-3 flex-1 min-w-0">
                   {isSelectionMode && (
                     <input
                       type="checkbox"
-                      checked={selectedUsers.includes(actionnaire.id)}
-                      onChange={() => handleUserSelection(actionnaire.id)}
+                      checked={selectedUsers.includes(actionnaire._id)}
+                      onChange={() => handleUserSelection(actionnaire._id)}
                       disabled={isPending}
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 mt-1"
                     />
@@ -658,7 +688,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                       )}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      ID: {safeString(actionnaire.id).slice(-8) || 'N/A'}
+                      ID: {safeString(actionnaire._id).slice(-8) || 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -681,7 +711,8 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 </span>
               </div>
 
-              <div className="mb-3">
+              {/* Informations de contact */}
+              <div className="mb-3 space-y-2">
                 <div className="flex items-center text-sm text-gray-600">
                   <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>
@@ -694,6 +725,41 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                     )}
                   </span>
                 </div>
+                
+                {actionnaire.adresse && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>{actionnaire.adresse}</span>
+                  </div>
+                )}
+                
+                {actionnaire.ville && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>{actionnaire.ville}</span>
+                  </div>
+                )}
+                
+                {actionnaire.nationalite && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Globe className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>{actionnaire.nationalite}</span>
+                  </div>
+                )}
+                
+                {actionnaire.cni && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CreditCard className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>CNI: {actionnaire.cni}</span>
+                  </div>
+                )}
+                
+                {actionnaire.dateNaissance && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>Né(e) le: {formatDate(actionnaire.dateNaissance)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-3">
@@ -703,7 +769,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                     Actions
                   </div>
                   <p className="text-lg font-medium text-gray-900">
-                    {formatActions(actionnaire.nbre_actions || 0)}
+                    {formatActions(actionnaire.actionsNumber || 0)}
                   </p>
                 </div>
                 <div>
@@ -712,7 +778,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                     Dividende
                   </div>
                   <p className="text-lg font-medium text-gray-900">
-                    {formatAmount(actionnaire.dividende_actuel || 0)}
+                    {formatAmount(actionnaire.dividende || 0)}
                   </p>
                 </div>
               </div>
@@ -721,7 +787,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                 Dernière mise à jour: {actionnaire.updatedAt ? formatDate(actionnaire.updatedAt) : 'N/A'}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => onEditUser(actionnaire)}
                   disabled={isPending}
@@ -731,14 +797,14 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                   Modifier
                 </button>
               
-                <button
+                {/* <button
                   onClick={() => handleDeleteClick(actionnaire)}
                   disabled={isPending}
                   className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Supprimer
-                </button>
+                </button> */}
               </div>
             </div>
           );
@@ -752,21 +818,6 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
             <div className="text-sm text-gray-600">
               Affichage de {startIndex + 1} à {Math.min(endIndex, filteredAndSortedActionnaires.length)} sur {filteredAndSortedActionnaires.length} résultat(s)
               {searchTerm && ` (filtré sur ${actionnaires.length} total)`}
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Éléments par page:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  //console.log('Changement items par page:', e.target.value);
-                }}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value={3}>3</option>
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
             </div>
           </div>
           
@@ -792,13 +843,13 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
             <div>
               <span className="text-gray-600">Actions totales:</span>
               <span className="font-medium ml-1">
-                {formatActions(filteredAndSortedActionnaires.reduce((sum, a) => sum + (a.nbre_actions || 0), 0))}
+                {formatActions(filteredAndSortedActionnaires.reduce((sum, a) => sum + (a.actionsNumber || 0), 0))}
               </span>
             </div>
             <div>
               <span className="text-gray-600">Dividendes totaux:</span>
               <span className="font-medium ml-1">
-                {formatAmount(filteredAndSortedActionnaires.reduce((sum, a) => sum + (a.dividende_actuel || 0), 0))}
+                {formatAmount(filteredAndSortedActionnaires.reduce((sum, a) => sum + (a.dividende || 0), 0))}
               </span>
             </div>
             <div>
