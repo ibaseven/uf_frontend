@@ -210,7 +210,7 @@ export const initiateRegister = async (state: any, formData: FormData) => {
             confirmPassword
         };
 
-        // console.log("Données envoyées pour initiation:", requestData);
+         //console.log("Données envoyées pour initiation:", requestData);
         
         // Appel à votre API backend pour initier l'inscription
         const res = await axios.post(REGISTER_INITIATE_URL, requestData);
