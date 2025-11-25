@@ -31,6 +31,7 @@ export const ROLEPAGES = {
   universalLab_Admin: [  // Ajout des routes pour admin
     "/dashboard/entreprise",
     "/page",
+    "/dashboard/admin/withdraw",
     "/dashboard/admin/actionnaire",
     "/dashboard/admin/sellaction",
     "/dashboard/entreprise",
