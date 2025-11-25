@@ -87,7 +87,7 @@ export const ResetPasswordFormView = ({
         <div className="bg-blue-50 p-4 rounded-lg">
           <h3 className="font-medium text-blue-900 mb-2">Information</h3>
           <p className="text-blue-700 text-sm">
-            Vous recevrez un code de vérification à 6 chiffres sur votre numéro WhatsApp. 
+            Vous recevrez un code de vérification à 6 chiffres sur votre numéro SMS. 
             Ce code expire dans 10 minutes.
           </p>
         </div>

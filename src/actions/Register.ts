@@ -72,70 +72,7 @@ export const register = async (state: any, formData: any) => {
     }
 };
 
-export const changePassword = async (state: any, formData: FormData) => {
-    try {
-        // Récupérer les données du FormData
-        const userId = formData.get("userId") as string;
-        const currentPassword = formData.get("password") as string;
-        const newPassword = formData.get("newPassword") as string;
 
-      
-
-        // Validation basique
-        if (!userId || !currentPassword || !newPassword) {
-            return {
-                type: "error",
-                message: "Tous les champs sont requis."
-            };
-        }
-
-        if (newPassword.length < 6) {
-            return {
-                type: "error",
-                message: "Le nouveau mot de passe doit contenir au moins 6 caractères."
-            };
-        }
-
-        // Préparation des données pour l'API
-        const requestData = {
-            userId,
-            currentPassword,
-            newPassword
-        };
-
-    
-        
-        // Appel à votre API backend
-        const res = await axios.post(CHANGE_PASSWORD_URL, requestData);
-
-   
-
-        return {
-            type: "success",
-            message: "Mot de passe changé avec succès !",
-        };
-
-    } catch (error: any) {
-        console.error("Erreur lors du changement de mot de passe:", error);
-
-        if (error.response) {
-            return {
-                type: "error",
-                message: error.response.data?.message || `Erreur ${error.response.status}: ${error.response.statusText}`
-            };
-        } else if (error.request) {
-            return {
-                type: "error",
-                message: "Impossible de joindre le serveur. Veuillez réessayer.",
-            };
-        } else {
-            return {
-                type: "error",
-                message: "Une erreur inattendue s'est produite.",
-            };
-        }
-    }
-};
 
 export const initiateRegister = async (state: any, formData: FormData) => {
     try {
@@ -223,7 +160,7 @@ export const initiateRegister = async (state: any, formData: FormData) => {
                 telephone: telephone,
                 tempUserId: res.data.tempUserId,
                 type: "success",
-                message: res.data.message || "Code de vérification envoyé via WhatsApp",
+                message: res.data.message || "Code de vérification envoyé via SMS",
                 errors: {}
             };
         } else {
@@ -383,7 +320,7 @@ export const resendRegisterOtp = async (state: any, formData: FormData) => {
         if (res.data.success) {
             return {
                 type: "success",
-                message: res.data.message || "Nouveau code envoyé via WhatsApp"
+                message: res.data.message || "Nouveau code envoyé via SMS"
             };
         } else {
             return {
