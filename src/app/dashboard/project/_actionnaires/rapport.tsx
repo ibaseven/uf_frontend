@@ -137,14 +137,11 @@ const ProjectPaymentView: React.FC<ProjectPaymentViewProps> = ({ projects: rawPr
         setSuccess('Paiement initié avec succès !');
         
         if (result.invoice?.response_text) {
-          setTimeout(() => {
-            window.location.href = result.invoice.response_text;
-          }, 1500);
-        } else {
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        }
+        // 🚀 Ouvre directement la page de paiement
+        window.open(result.invoice.response_text, "_blank"); 
+      } else {
+        window.location.reload();
+      }
       } else {
         setError(result.message || 'Erreur lors du paiement');
       }

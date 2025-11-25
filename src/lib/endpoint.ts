@@ -74,7 +74,9 @@ export const GET_MY_ACTIONS_PURCHASES_URL = `${API_URL}/buyActions`;
 export const ADD_PROJECT_URL = `${API_URL}/createAnProject`;
 export const GET_ACTION_PRICE_URL = `${API_URL}/action/getPrice`;
 export const UPDATE_ACTION_PRICE_URL = `${API_URL}/action/price`;
-
+export const WITHDRAW_INITIATE_URL = `${API_URL}/dividends/withdraw/initiate`;
+export const WITHDRAW_CONFIRM_URL = `${API_URL}/dividends/withdraw/confirm`;
+export const GET_ADMIN_BALANCE_URL = `${API_URL}/get-admin`; // Utiliser l'endpoint existant
 export const UPDATE_PROFILE_URL = `${API_URL}/updateProfile`;
 
 

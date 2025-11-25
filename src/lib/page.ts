@@ -48,13 +48,13 @@ export function getPages(pathname: string, role?: string): Group[] {
             icon: LayoutGrid,
             submenus: []
           },
-          /* {
-            href: "/dashboard/admin/historique",
-            label: "Historique",
-            active: pathname === "/dashboard/admin/historique",
+           {
+            href: "/dashboard/admin/withdraw",
+            label: "Retrait et Depot",
+            active: pathname === "/dashboard/admin/withdraw",
             icon: LayoutGrid,
             submenus: []
-          }, */
+          }, 
  {
             href: " /dashboard/admin/purchaseActionnaire",
             label: "Historique Transaction Actions",
@@ -62,7 +62,7 @@ export function getPages(pathname: string, role?: string): Group[] {
             icon: LayoutGrid,
             submenus: []
           },
- /* {
+ /*{
             href: " /dashboard/admin/sellaction",
             label: "Vente des Actions",
             active: pathname === "/dashboard/admin/sellaction",
