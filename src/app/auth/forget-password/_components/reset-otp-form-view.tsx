@@ -84,7 +84,7 @@ export const ResetOtpFormView = ({
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Créer un nouveau mot de passe</h2>
         <p className="text-gray-600">
-          Entrez le code reçu sur WhatsApp ({telephone}) et choisissez votre nouveau mot de passe
+          Entrez le code reçu sur SMS ({telephone}) et choisissez votre nouveau mot de passe
         </p>
       </div>
 
