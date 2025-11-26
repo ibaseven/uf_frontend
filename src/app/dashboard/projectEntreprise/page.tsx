@@ -8,7 +8,7 @@ import ProjectsView from './_actionnaires/pagee';
 const ProjectsPage = async () => {
   const response = await fetchJSON(GET_ALL_PROJECTS_URL);
   const projectByuser= await fetchJSON(GET_ALL_PROJECTS_BYUSER_URL)
- // console.log(projectByuser);
+ //console.log(response);
 
   return( <ProjectsView projects={response.projects} />);
 };
