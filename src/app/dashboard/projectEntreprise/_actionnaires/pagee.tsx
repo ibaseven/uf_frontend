@@ -10,7 +10,9 @@ import {
   Clock,
   Users,
   X,
-  Info
+  Info,
+  FileText,
+  Download
 } from 'lucide-react';
 import { participateToProject } from '@/actions/projectActions';
 
@@ -22,6 +24,10 @@ interface Project {
   description?: string;
   status?: string;
   createdAt: string;
+  duration?: number;
+  monthlyPayment?: number;
+  gainProject?: string;
+  rapportUrl?: string;
 }
 
 interface ProjectsViewProps {
@@ -60,6 +66,11 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Fonction pour télécharger le rapport
+  const handleDownloadReport = (rapportUrl: string, projectName: string) => {
+    window.open(rapportUrl, '_blank');
   };
 
   // Fonction pour participer à un projet
@@ -151,7 +162,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
                       {project.nameProject}
                     </h3>
                     {project.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
+                      <p className="text-sm text-gray-600">
                         {project.description}
                       </p>
                     )}
@@ -173,17 +184,40 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
 
                 {/* Informations supplémentaires */}
                 <div className="space-y-2 mb-4 text-sm text-gray-600">
+                  {project.duration && (
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      <span>Durée: {project.duration} mois</span>
+                    </div>
+                  )}
+                  {project.monthlyPayment && (
+                    <div className="flex items-center">
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      <span>Paiement mensuel: {formatAmount(project.monthlyPayment)}</span>
+                    </div>
+                  )}
+                  {project.gainProject && (
+                    <div className="flex items-center">
+                      <TrendingUp className="w-4 h-4 mr-2 text-green-600" />
+                      <span className="text-green-600 font-medium">Gain: {formatAmount(Number(project.gainProject))}</span>
+                    </div>
+                  )}
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-2" />
                     <span>Ajouté le {formatDate(project.createdAt)}</span>
                   </div>
-                  {project.status && (
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span className="capitalize">{project.status}</span>
-                    </div>
-                  )}
                 </div>
+
+                {/* Bouton de téléchargement du rapport */}
+                {project.rapportUrl && (
+                  <button
+                    onClick={() => handleDownloadReport(project.rapportUrl!, project.nameProject)}
+                    className="w-full py-2 px-4 mb-3 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Télécharger le programme
+                  </button>
+                )}
 
                 {/* Bouton de participation */}
                 <button

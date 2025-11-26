@@ -165,7 +165,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-green-600 hover:text-green-900"
-                          title="Télécharger le rapport"
+                          title="Télécharger le programme"
                         >
                           <Download className="w-4 h-4" />
                         </a>
@@ -244,7 +244,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                   className="flex items-center text-sm text-blue-600 hover:text-blue-800"
                 >
                   <FileText className="w-4 h-4 mr-1" />
-                  Télécharger le rapport
+                  Télécharger le programme
                 </a>
               </div>
             )}
@@ -317,7 +317,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                       className="flex items-center text-blue-600 hover:text-blue-800"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Télécharger le rapport PDF
+                      Télécharger le programme PDF
                     </a>
                   </div>
                 )}
