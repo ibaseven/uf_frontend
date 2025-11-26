@@ -229,28 +229,33 @@ const TransactionsAdaptedViewBYAdmin: React.FC<TransactionsViewProps> = ({
     };
   }, [filteredAndSortedTransactions, currentPage, itemsPerPage]);
 
-  const stats = useMemo(() => {
-    const actionsTransactions = transactions.filter(t => getTransactionType(t) === 'actions');
-    const dividendesTransactions = transactions.filter(t => getTransactionType(t) === 'dividendes');
+const stats = useMemo(() => {
+  const actionsTransactions = transactions.filter(t => getTransactionType(t) === 'actions');
+  const dividendesTransactions = transactions.filter(t => getTransactionType(t) === 'dividendes');
 
-    return {
-      total: transactions.length,
-      completed: transactions.filter(t => t.status === 'confirmed').length,
-      pending: transactions.filter(t => !t.status || t.status === 'pending').length,
-      failed: transactions.filter(t => t.status === 'failed').length,
-      totalAmount: transactions
-        .filter(t => t.status === 'confirmed')
-        .reduce((sum, t) => sum + t.amount, 0),
-      actionsCount: actionsTransactions.length,
-      dividendesCount: dividendesTransactions.length,
-      actionsAmount: actionsTransactions
-        .filter(t => t.status === 'confirmed')
-        .reduce((sum, t) => sum + t.amount, 0),
-      dividendesAmount: dividendesTransactions
-        .filter(t => t.status === 'confirmed')
-        .reduce((sum, t) => sum + t.amount, 0)
-    };
-  }, [transactions]);
+  // Filtrer les transactions qui ne sont pas des retraits de dividendes
+  const transactionsForTotal = transactions.filter(t => 
+    !t.description.toLowerCase().includes('retrait dividende')
+  );
+
+  return {
+    total: transactions.length,
+    completed: transactions.filter(t => t.status === 'confirmed').length,
+    pending: transactions.filter(t => !t.status || t.status === 'pending').length,
+    failed: transactions.filter(t => t.status === 'failed').length,
+    totalAmount: transactionsForTotal
+      .filter(t => t.status === 'confirmed')
+      .reduce((sum, t) => sum + t.amount, 0),
+    actionsCount: actionsTransactions.length,
+    dividendesCount: dividendesTransactions.length,
+    actionsAmount: actionsTransactions
+      .filter(t => t.status === 'confirmed')
+      .reduce((sum, t) => sum + t.amount, 0),
+    dividendesAmount: dividendesTransactions
+      .filter(t => t.status === 'confirmed' && !t.description.toLowerCase().includes('retrait dividende'))
+      .reduce((sum, t) => sum + t.amount, 0)
+  };
+}, [transactions]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
