@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createdOrUpdated, fetchJSON } from '@/lib/api';
 import { 
   BUY_ACTIONS_URL,
+  DEDUCT_FEES_URL,
   GET_MY_ACTIONS_PURCHASES_URL, 
   UPDATE_ACTION_PRICE_URL, 
   UPDATE_PROFILE_URL
@@ -218,6 +219,63 @@ export const updateActionPrice = async (formData: { newPrice: number }) => {
     return {
       type: "error",
       message: "Erreur lors de la mise à jour du prix"
+    };
+  }
+};
+
+
+export const deductFees = async (formData: {
+  montant: number;
+  description: string;
+}) => {
+  try {
+    // Validation basique
+    if (!formData.montant || formData.montant <= 0) {
+      return {
+        type: "error",
+        message: "Montant invalide"
+      };
+    }
+
+    if (!formData.description || formData.description.trim() === "") {
+      return {
+        type: "error",
+        message: "Description requise"
+      };
+    }
+
+    // Appel API
+    const response = await createdOrUpdated({
+      url: DEDUCT_FEES_URL,
+      data: formData
+    });
+
+    if (response.message === "Frais déduits avec succès") {
+      return {
+        type: "success",
+        message: response.message,
+        nouveauSolde: response.nouveauSolde
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la déduction"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans deductFees:", error);
+    
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+    
+    return {
+      type: "error",
+      message: "Erreur lors de la déduction des frais"
     };
   }
 };
