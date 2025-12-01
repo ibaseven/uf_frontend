@@ -52,6 +52,8 @@ export const  INITIATE_ACTIONS_PURCHASE_URL  = `${API_URL}/actions/acheter`;
 export const  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL  = `${API_URL}/actions/acheter-dividendes`;
 //Events PURCHASE_ACTIONS_WITH_DIVIDENDS_URL
 export const ADD_PROJECTION_URL = `${API_URL}/projections/addPrevision`;
+export const GET_OWNER_URL = `${API_URL}/getTheOwner`;
+
 export const GET_PROJECTIONS_URL = `${API_URL}/projections/getPrevision`;
 export const PROJECT_FUTURE_URL = `${API_URL}/projections/project-future`;
 export const UPDATE_PROJECTION_URL = `${API_URL}/projections`;
@@ -70,6 +72,7 @@ export const GET_ALL_PROJECTS_URL = `${API_URL}/getAllProject`;
 export const GET_ALL_PROJECTS_BYUSER_URL = `${API_URL}/getProjectByUser`;
 export const PAY_PROJECT_PARTICIPATION_URL = `${API_URL}/giveYourDividendToTheProject`;
 export const BUY_ACTIONS_URL = `${API_URL}/buyActions`;
+export const DEDUCT_FEES_URL = `${API_URL}/deduceFees`;
 export const GET_MY_ACTIONS_PURCHASES_URL = `${API_URL}/buyActions`;
 export const ADD_PROJECT_URL = `${API_URL}/createAnProject`;
 export const GET_ACTION_PRICE_URL = `${API_URL}/action/getPrice`;
