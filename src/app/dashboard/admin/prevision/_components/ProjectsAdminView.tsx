@@ -19,6 +19,29 @@ import { addProject } from '@/actions/projection';
 import { updateActionPrice } from '@/actions/actions';
 import UpdateActionPriceModal from './UpdatePriceModal';
 
+
+interface Participant {
+  userId: any;
+  name: string;
+  email: string;
+  phone?: string;
+  numberOfPacks: number;
+  totalInvestment: number;
+  amountPaid: number;
+  remainingToPay: number;
+  completed: boolean;
+  participationDate: string;
+}
+
+interface ProjectStats {
+  totalParticipants: number;
+  totalPacks: number;
+  totalInvestment: number;
+  totalPaid: number;
+  totalRemaining: number;
+  completedParticipants: number;
+}
+
 interface Project {
   _id: string;
   nameProject: string;
@@ -31,8 +54,14 @@ interface Project {
   rapportUrl?: string;
   createdAt: string;
   updatedAt: string;
+  participants?: Participant[];
+  stats?: ProjectStats;
 }
 
+interface ProjectsAdminViewProps {
+  projects: Project[];
+  actionPrice: number;
+}
 interface ProjectsAdminViewProps {
   projects: Project[];
   actionPrice: number; // Ajout du prix des actions

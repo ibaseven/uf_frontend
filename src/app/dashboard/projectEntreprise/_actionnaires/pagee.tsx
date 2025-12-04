@@ -47,6 +47,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showParticipationModal, setShowParticipationModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [participationDetails, setParticipationDetails] = useState<ParticipationDetails | null>(null);
 
   // Fonction pour formater les montants
@@ -73,22 +75,39 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
     window.open(rapportUrl, '_blank');
   };
 
-  // Fonction pour participer à un projet
-  const handleParticipate = async (projectId: string, projectName: string) => {
-    setLoading(projectId);
+  // Ouvrir la modal de confirmation
+  const openConfirmModal = (project: Project) => {
+    setSelectedProject(project);
+    setShowConfirmModal(true);
     setError(null);
     setSuccess(null);
+  };
+
+  // Fermer la modal de confirmation
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    setSelectedProject(null);
+  };
+
+  // Fonction pour participer à un projet (après confirmation)
+  const handleParticipate = async () => {
+    if (!selectedProject) return;
+
+    setLoading(selectedProject._id);
+    setError(null);
+    setSuccess(null);
+    setShowConfirmModal(false);
 
     try {
-      const result = await participateToProject({ projectId });
+      const result = await participateToProject({ projectId: selectedProject._id });
 
       if (result.type === 'success') {
-        setSuccess(`Participation au projet "${projectName}" enregistrée avec succès !`);
+        setSuccess(`Participation au projet "${selectedProject.nameProject}" enregistrée avec succès !`);
         
         // Afficher les détails de la participation dans une popup
         if (result.participation) {
           setParticipationDetails({
-            projectName: projectName,
+            projectName: selectedProject.nameProject,
             numberOfPacks: result.participation.numberOfPacks,
             totalInvestment: result.participation.totalInvestment,
             amountPaid: result.participation.amountPaid,
@@ -104,6 +123,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
       setError('Une erreur est survenue');
     } finally {
       setLoading(null);
+      setSelectedProject(null);
     }
   };
 
@@ -221,7 +241,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
 
                 {/* Bouton de participation */}
                 <button
-                  onClick={() => handleParticipate(project._id, project.nameProject)}
+                  onClick={() => openConfirmModal(project)}
                   disabled={loading === project._id}
                   className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
@@ -243,7 +263,105 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ projects }) => {
         </div>
       )}
 
-      {/* Modal de confirmation de participation */}
+      {/* Modal de confirmation avant participation */}
+      {showConfirmModal && selectedProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md mx-auto shadow-2xl transform transition-all">
+            {/* Header de la modal */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-7 h-7 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white ml-3">Confirmer la participation</h2>
+                </div>
+                <button
+                  onClick={closeConfirmModal}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu de la modal */}
+            <div className="p-6">
+              {/* Nom du projet */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-600 mb-1">Projet</p>
+                <p className="text-lg font-bold text-blue-900">{selectedProject.nameProject}</p>
+              </div>
+
+              {/* Détails du projet */}
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Prix du pack</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {formatAmount(selectedProject.packPrice)}
+                  </span>
+                </div>
+
+                {selectedProject.duration && (
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">Durée</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {selectedProject.duration} mois
+                    </span>
+                  </div>
+                )}
+
+                {selectedProject.gainProject && (
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                    <span className="text-gray-700 font-medium">Gain estimé</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {formatAmount(Number(selectedProject.gainProject))}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Message d'avertissement */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <Info className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">⚠️ Important</p>
+                    <p>En confirmant, vous vous engagez à participer à ce projet. Un paiement sera requis pour finaliser votre participation.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Question de confirmation */}
+              <div className="text-center mb-4">
+                <p className="text-gray-700 font-medium">
+                  Voulez-vous vraiment participer à ce projet ?
+                </p>
+              </div>
+            </div>
+
+            {/* Footer de la modal */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-lg">
+              <div className="flex gap-3">
+                <button
+                  onClick={closeConfirmModal}
+                  className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleParticipate}
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Oui, confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de participation (succès) */}
       {showParticipationModal && participationDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-md mx-auto shadow-2xl transform transition-all">
