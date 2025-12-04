@@ -10,8 +10,36 @@ import {
   Trash2,
   Download,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Users
 } from 'lucide-react';
+import ProjectDetailsModal from './ProjectDetailsModal';
+
+interface Participant {
+  userId: {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    telephone?: string;
+    email?: string;
+  } | string;
+  numberOfPacks: number;
+  totalInvestment: number;
+  amountPaid: number;
+  remainingToPay: number;
+  completed: boolean;
+  participationDate: string;
+  _id?: string;
+}
+
+interface ProjectStats {
+  totalParticipants: number;
+  totalPacks: number;
+  totalInvestment: number;
+  totalPaid: number;
+  totalRemaining: number;
+  completedParticipants: number;
+}
 
 interface Project {
   _id: string;
@@ -25,6 +53,8 @@ interface Project {
   rapportUrl?: string;
   createdAt: string;
   updatedAt: string;
+  participants?: Participant[];
+  stats?: ProjectStats;
 }
 
 interface ProjectsListProps {
@@ -57,6 +87,55 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
     setShowDetailModal(true);
   };
 
+  const getParticipantsDisplay = (participants?: Participant[]) => {
+    if (!participants || participants.length === 0) {
+      return (
+        <span className="text-sm text-gray-400 italic">Aucun participant</span>
+      );
+    }
+
+    if (participants.length <= 3) {
+      return (
+        <div className="space-y-1">
+          {participants.map((p, idx) => {
+            const user = typeof p.userId === 'object' ? p.userId : null;
+            const fullName = user 
+              ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Participant'
+              : 'Participant';
+            
+            return (
+              <div key={idx} className="text-xs text-gray-700 flex items-center">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                {fullName}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        {participants.slice(0, 2).map((p, idx) => {
+          const user = typeof p.userId === 'object' ? p.userId : null;
+          const fullName = user 
+            ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Participant'
+            : 'Participant';
+          
+          return (
+            <div key={idx} className="text-xs text-gray-700 flex items-center">
+              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+              {fullName}
+            </div>
+          );
+        })}
+        <div className="text-xs text-blue-600 font-medium">
+          +{participants.length - 2} autre{participants.length - 2 > 1 ? 's' : ''}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Liste Desktop */}
@@ -79,6 +158,9 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Gain
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Participants
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
@@ -142,6 +224,17 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                       <span className="text-sm text-gray-400">-</span>
                     )}
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-start">
+                      <Users className="w-4 h-4 text-blue-500 mr-2 mt-1 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-gray-900 mb-1">
+                          {project.stats?.totalParticipants || 0} participant{(project.stats?.totalParticipants || 0) > 1 ? 's' : ''}
+                        </div>
+                        {getParticipantsDisplay(project.participants)}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 text-gray-400 mr-2" />
@@ -196,7 +289,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
         {projects.map((project) => (
           <div key={project._id} className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-between items-start mb-3">
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">{project.nameProject}</h3>
                 {project.description && (
                   <p className="text-xs text-gray-500 mt-1">{project.description}</p>
@@ -204,13 +297,13 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
               </div>
               <button
                 onClick={() => handleViewDetails(project)}
-                className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                className="p-1 text-blue-600 hover:bg-blue-50 rounded flex-shrink-0 ml-2"
               >
                 <Eye className="w-4 h-4" />
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm mb-3">
               <div>
                 <span className="text-gray-600">Prix du pack</span>
                 <div className="font-medium text-green-600">
@@ -235,8 +328,19 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
               </div>
             </div>
 
+            {/* Section Participants Mobile */}
+            <div className="bg-blue-50 rounded-lg p-3 mb-3">
+              <div className="flex items-center mb-2">
+                <Users className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-gray-900">
+                  {project.stats?.totalParticipants || 0} participant{(project.stats?.totalParticipants || 0) > 1 ? 's' : ''}
+                </span>
+              </div>
+              {getParticipantsDisplay(project.participants)}
+            </div>
+
             {project.rapportUrl && (
-              <div className="mt-3 pt-3 border-t">
+              <div className="pt-3 border-t">
                 <a
                   href={project.rapportUrl}
                   target="_blank"
@@ -252,101 +356,13 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
         ))}
       </div>
 
-      {/* Modal de détails */}
+      {/* Modal de détails avec participants */}
       {showDetailModal && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  {selectedProject.nameProject}
-                </h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {selectedProject.description && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
-                    <p className="text-gray-600">{selectedProject.description}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Prix du Pack</div>
-                    <div className="text-xl font-bold text-green-600">
-                      {formatAmount(selectedProject.packPrice)}
-                    </div>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Durée</div>
-                    <div className="text-xl font-bold text-blue-600">
-                      {selectedProject.duration} mois
-                    </div>
-                  </div>
-                  {selectedProject.monthlyPayment && (
-                    <div className="bg-purple-50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 mb-1">Paiement Mensuel</div>
-                      <div className="text-xl font-bold text-purple-600">
-                        {formatAmount(selectedProject.monthlyPayment)}
-                      </div>
-                    </div>
-                  )}
-                  {selectedProject.gainProject && (
-                    <div className="bg-yellow-50 rounded-lg p-4">
-                      <div className="text-sm text-gray-600 mb-1">Gain Projet</div>
-                      <div className="text-xl font-bold text-yellow-600">
-                        {formatAmount(selectedProject.gainProject)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {selectedProject.rapportUrl && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <a
-                      href={selectedProject.rapportUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:text-blue-800"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Télécharger le programme PDF
-                    </a>
-                  </div>
-                )}
-
-                <div className="bg-gray-50 rounded-lg p-4 text-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="text-gray-600">Créé le :</span>
-                      <div className="font-medium">{formatDate(selectedProject.createdAt)}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Modifié le :</span>
-                      <div className="font-medium">{formatDate(selectedProject.updatedAt)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-6 pt-6 border-t">
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProjectDetailsModal
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          project={selectedProject}
+        />
       )}
     </>
   );
