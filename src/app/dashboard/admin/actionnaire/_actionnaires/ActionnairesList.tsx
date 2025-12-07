@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Edit3,
   Phone,
- 
   Search,
   Filter,
   X,
@@ -17,7 +16,8 @@ import {
   MapPin,
   CreditCard,
   Calendar,
-  Globe
+  Globe,
+  Trash2
 } from 'lucide-react';
 import Pagination from './Pagination';
 
@@ -639,7 +639,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                           Modifier
                         </button>
                       
-                        {/* <button
+                        <button
                           onClick={() => handleDeleteClick(actionnaire)}
                           disabled={isPending}
                           className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -647,7 +647,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           Supprimer
-                        </button> */}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -658,7 +658,7 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
         </div>
       </div>
 
-      {/* Vue Mobile/Tablette - AVEC TOUS LES CHAMPS */}
+      {/* Vue Mobile/Tablette */}
       <div className="lg:hidden space-y-3 sm:space-y-4">
         {currentActionnaires.map((actionnaire) => {
           const fullName = `${safeString(actionnaire.firstName)} ${safeString(actionnaire.lastName)}`.trim();
@@ -797,14 +797,14 @@ const ActionnairesList: React.FC<ActionnaireListProps> = ({
                   Modifier
                 </button>
               
-                {/* <button
+                <button
                   onClick={() => handleDeleteClick(actionnaire)}
                   disabled={isPending}
                   className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Supprimer
-                </button> */}
+                </button>
               </div>
             </div>
           );
