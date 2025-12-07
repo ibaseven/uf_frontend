@@ -1,13 +1,15 @@
 
 
 import { z } from 'zod';
-import { createdOrUpdated } from '@/lib/api';
+import { createdOrUpdated, deleteWithAxios } from '@/lib/api';
 import { 
   PARTICIPATE_PROJECT_URL, 
   PAY_PROJECT_PARTICIPATION_URL,
   ADD_PROJECT_URL, 
   DECREASE_PARTICIPANT_PACKS_URL,
-  INCREASE_PARTICIPANT_PACKS_URL
+  INCREASE_PARTICIPANT_PACKS_URL,
+  UPDATE_PROJECT_URL, 
+  DELETE_PROJECT_URL 
 } from '@/lib/endpoint';
 
 // Schemas de validation
@@ -21,10 +23,14 @@ const PayProjectParticipationSchema = z.object({
 });
 
 
-// 🔥 NOUVELLE ACTION : Ajouter un projet avec upload de fichier
-
-
-
+const UpdateProjectSchema = z.object({
+  nameProject: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
+  packPrice: z.number().positive("Le prix du pack doit être positif"),
+  duration: z.number().positive("La durée doit être positive"),
+  monthlyPayment: z.number().optional(),
+  description: z.string().optional(),
+  gainProject: z.number().optional()
+});
 // Action : Payer une participation à un projet
 export const payProjectParticipation = async (formData: { projectIds: string[], amount: number }) => {
   try {
@@ -261,6 +267,98 @@ export const increaseParticipantPacks = async (formData: {
     return {
       type: "error",
       message: "Erreur lors de l'ajout des packs"
+    };
+  }
+};
+
+export const updateProject = async (projectId: string, formData: {
+  nameProject: string;
+  packPrice: number;
+  duration: number;
+  monthlyPayment?: number;
+  description?: string;
+  gainProject?: number;
+}) => {
+  try {
+    const validation = UpdateProjectSchema.safeParse(formData);
+
+    if (!validation.success) {
+      return { 
+        type: "error", 
+        errors: validation.error.flatten().fieldErrors,
+        message: "Données invalides"
+      };
+    }
+
+    const validatedData = validation.data;
+
+    const response = await createdOrUpdated({
+      url: `${UPDATE_PROJECT_URL}/${projectId}`,
+      data: validatedData,
+      updated: true
+    });
+
+    if (response.message === "Update Succesful" || response.message?.includes("succès")) {
+      return {
+        type: "success",
+        message: "Projet mis à jour avec succès",
+        project: response.update || response.project
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la mise à jour"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans updateProject:", error);
+    
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+    
+    return {
+      type: "error",
+      message: "Erreur lors de la mise à jour du projet"
+    };
+  }
+};
+
+export const deleteProject = async (projectId: string) => {
+  try {
+    const response = await deleteWithAxios({
+      url: `${DELETE_PROJECT_URL}/${projectId}`
+    });
+
+    if (response.message === "Update Succesful" || response.message?.includes("succès")) {
+      return {
+        type: "success",
+        message: "Projet supprimé avec succès"
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la suppression"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans deleteProject:", error);
+    
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+    
+    return {
+      type: "error",
+      message: "Erreur lors de la suppression du projet"
     };
   }
 };

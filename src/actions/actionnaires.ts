@@ -1,8 +1,7 @@
 "use server";
 import { z } from "zod";
-import { createdOrUpdated} from "@/lib/api";
-import { UPDATE_USER_URL } from "@/lib/endpoint";
-
+import { createdOrUpdated, deleteWithAxios } from "@/lib/api";
+import { UPDATE_USER_URL, DELETE_USER_URL } from "@/lib/endpoint";
 
 const UpdateUserSchema = z.object({
   userId: z.string().min(1, { message: "ID de l'utilisateur requis" }),
@@ -14,14 +13,12 @@ const UpdateUserSchema = z.object({
   pays: z.string().optional(),
   nationalite: z.string().optional(),
   cni: z.string().optional(),
-  dateNaissance: z.string().optional(), // format YYYY-MM-DD
+  dateNaissance: z.string().optional(),
   dividende: z.number().min(0).optional(),
 });
 
-
 export const updateUserInfo = async (formData) => {
   try {
-    // Validation Zod
     const validation = UpdateUserSchema.safeParse(formData);
 
     if (!validation.success) {
@@ -34,7 +31,6 @@ export const updateUserInfo = async (formData) => {
 
     const validatedData = validation.data;
 
-    // Payload envoyé au backend
     const payload = {
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
@@ -46,10 +42,8 @@ export const updateUserInfo = async (formData) => {
       cni: validatedData.cni,
       dateNaissance: validatedData.dateNaissance,
       dividende: validatedData.dividende,
-
     };
 
-    // Appel API PUT
     const response = await createdOrUpdated({
       url: `${UPDATE_USER_URL}/${validatedData.userId}`,
       data: payload,
@@ -82,6 +76,49 @@ export const updateUserInfo = async (formData) => {
     return {
       type: "error",
       message: "Erreur lors de la mise à jour de l'utilisateur"
+    };
+  }
+};
+
+// Nouvelle action pour supprimer un utilisateur
+export const deleteUser = async (formData: { userId: string }) => {
+  try {
+    if (!formData.userId) {
+      return {
+        type: "error",
+        message: "ID de l'utilisateur requis"
+      };
+    }
+
+    const response = await deleteWithAxios({
+      url: `${DELETE_USER_URL}/${formData.userId}`
+    });
+
+    if (response.success || response.message?.includes("succès") || response.message?.includes("Succesful")) {
+      return {
+        type: "success",
+        message: "Utilisateur supprimé avec succès"
+      };
+    }
+
+    return {
+      type: "error",
+      message: response.message || "Erreur lors de la suppression"
+    };
+
+  } catch (error: any) {
+    console.error("Erreur dans deleteUser:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de la suppression de l'utilisateur"
     };
   }
 };
