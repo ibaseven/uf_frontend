@@ -32,7 +32,7 @@ import {
 
 import { useRouter } from 'next/navigation';
 import ActionnairesList from './ActionnairesList';
-import { updateUserInfo } from '@/actions/actionnaires';
+import { updateUserInfo, deleteUser } from '@/actions/actionnaires';
 
 // Types
 interface Actionnaire {
@@ -178,63 +178,46 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     requestDeleteConfirmation('single', userId, userName);
   };
 
-/*   // Fonction pour supprimer plusieurs utilisateurs
-  const handleDeleteMultipleUsers = () => {
-    if (selectedUsers.length === 0) return;
-    requestDeleteConfirmation('multiple');
-  };
+const confirmDelete = async () => {
+  if (!deleteTarget || deleteTarget.type !== 'single' || !deleteTarget.userId) return;
 
-  // Fonction pour confirmer et exécuter la suppression
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
+  startTransition(async () => {
+    try {
+      const result = await deleteUser({ userId: deleteTarget.userId });
 
-    startTransition(async () => {
-      try {
-        if (deleteTarget.type === 'single' && deleteTarget.userId) {
-          const result = await deleteUser({ userId: deleteTarget.userId });
-
-          if (result.type === 'success') {
-            setMessage({ 
-              type: 'success', 
-              text: `${deleteTarget.userName || 'L\'utilisateur'} a été supprimé avec succès` 
-            });
-            router.refresh();
-          } else {
-            setMessage({ type: 'error', text: result.message || 'Erreur lors de la suppression' });
-          }
-        } else if (deleteTarget.type === 'multiple') {
-          const result = await deleteMultipleUsers({ userIds: selectedUsers });
-
-          if (result.type === 'success') {
-            setMessage({ 
-              type: 'success', 
-              text: `${selectedUsers.length} utilisateur(s) supprimé(s) avec succès` 
-            });
-            setSelectedUsers([]);
-            setIsSelectionMode(false);
-            router.refresh();
-          } else {
-            setMessage({ type: 'error', text: result.message || 'Erreur lors de la suppression multiple' });
-          }
-        }
-      } catch (error) {
-        console.error('Erreur suppression:', error);
+      if (result.type === 'success') {
+        setMessage({ 
+          type: 'success', 
+          text: `${deleteTarget.userName} a été supprimé avec succès` 
+        });
+        setTimeout(() => {
+          router.refresh();
+        }, 1000);
+      } else {
         setMessage({ 
           type: 'error', 
-          text: 'Une erreur est survenue lors de la suppression' 
+          text: result.message || 'Erreur lors de la suppression' 
         });
-      } finally {
-        setShowDeleteConfirm(false);
-        setDeleteTarget(null);
       }
-    });
-  }; */
-
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Une erreur est survenue lors de la suppression' 
+      });
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+    }
+  });
+};
   // Annuler la suppression
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setDeleteTarget(null);
   };
+
+  
 
   // Ouvrir le modal d'édition
   const handleEditUser = (actionnaire: Actionnaire) => {
@@ -486,7 +469,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
           </div>
 
           {/* Desktop buttons */}
-          <div className="hidden sm:flex space-x-3">
+          {/* <div className="hidden sm:flex space-x-3">
             <button
               onClick={toggleSelectionMode}
               disabled={isPending}
@@ -504,7 +487,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                 {isSelectionMode ? 'Annuler' : 'Sélection'}
               </span>
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Mobile action buttons */}
@@ -690,48 +673,54 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
         selectedUsers={selectedUsers}
         onToggleUserSelection={toggleUserSelection}
       />
-
-      {/* Modal de confirmation de suppression */}
-    {/*   {showDeleteConfirm && deleteTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="p-3 rounded-full bg-red-100">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-                <h3 className="ml-3 text-lg font-bold text-gray-900">
-                  Confirmer la suppression
-                </h3>
-              </div>
-              
-              <p className="text-gray-600 mb-6">
-                {deleteTarget.type === 'single' 
-                  ? `Êtes-vous sûr de vouloir supprimer ${deleteTarget.userName || 'cet utilisateur'} ? Cette action est irréversible.`
-                  : `Êtes-vous sûr de vouloir supprimer ${selectedUsers.length} utilisateur(s) ? Cette action est irréversible.`
-                }
-              </p>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={cancelDelete}
-                  disabled={isPending}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  disabled={isPending}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isPending ? 'Suppression...' : 'Supprimer'}
-                </button>
-              </div>
-            </div>
+{/* Modal de confirmation de suppression */}
+{showDeleteConfirm && deleteTarget && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg w-full max-w-md">
+      <div className="p-6">
+        <div className="flex items-center mb-4">
+          <div className="p-3 rounded-full bg-red-100">
+            <AlertCircle className="w-6 h-6 text-red-600" />
           </div>
+          <h3 className="ml-3 text-lg font-bold text-gray-900">
+            Confirmer la suppression
+          </h3>
         </div>
-      )} */}
+        
+        <p className="text-gray-600 mb-6">
+          Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{deleteTarget.userName || 'cet utilisateur'}</span> ? Cette action est irréversible.
+        </p>
+
+        <div className="flex space-x-3">
+          <button
+            onClick={cancelDelete}
+            disabled={isPending}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={confirmDelete}
+            disabled={isPending}
+            className="flex-1 flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isPending ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Suppression...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Modal d'édition - VERSION COMPLÈTE */}
       {showEditModal && editingUser && (

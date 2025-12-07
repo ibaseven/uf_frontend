@@ -46,7 +46,7 @@ export const    ADD_NEW_YEAR_URL   = `${API_URL}/entreprises/new-year`;
 export const  REQUEST_PASSWORD_RESET_URL  = `${API_URL}/request-password-reset`;
 export const  VERIFY_RESET_OTP_URL  = `${API_URL}/verify-reset-otp`;
 export const  RESEND_RESET_OTP_URL  = `${API_URL}/resend-reset-otp`;
-export const  DELETE_USER_URL  = `${API_URL}/deleteUsers`;
+export const  DELETE_USER_URL  = `${API_URL}/deteleUser`;
 export const  DELETE_MULTIPLE_URL  = `${API_URL}/deleteMultipleUsers/batch`;
 export const  INITIATE_ACTIONS_PURCHASE_URL  = `${API_URL}/actions/acheter`;
 export const  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL  = `${API_URL}/actions/acheter-dividendes`;
@@ -85,4 +85,5 @@ export const WITHDRAW_CONFIRM_URL = `${API_URL}/dividends/withdraw/confirm`;
 export const GET_ADMIN_BALANCE_URL = `${API_URL}/get-admin`; // Utiliser l'endpoint existant
 export const UPDATE_PROFILE_URL = `${API_URL}/updateProfile`;
 
-
+export const UPDATE_PROJECT_URL = `${API_URL}/updateProject`;
+export const DELETE_PROJECT_URL = `${API_URL}/deleteProject`;

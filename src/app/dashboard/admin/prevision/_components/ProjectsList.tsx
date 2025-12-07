@@ -1,6 +1,6 @@
 // _components/ProjectsList.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { 
   Calendar, 
   DollarSign, 
@@ -11,9 +11,15 @@ import {
   Download,
   FileText,
   TrendingUp,
-  Users
+  Users,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import ProjectDetailsModal from './ProjectDetailsModal';
+import EditProjectModal from './EditProjectModal';
+import DeleteConfirmModal from './DeleteConfirmModal';
+import { updateProject, deleteProject } from '@/actions/projectActions';
 
 interface Participant {
   userId: {
@@ -62,8 +68,15 @@ interface ProjectsListProps {
 }
 
 const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
+  const router = useRouter();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   const formatAmount = (amount: number): string => {
     return new Intl.NumberFormat('fr-FR', {
@@ -85,6 +98,74 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
   const handleViewDetails = (project: Project) => {
     setSelectedProject(project);
     setShowDetailModal(true);
+  };
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (project: Project) => {
+    setDeletingProject(project);
+    setShowDeleteModal(true);
+  };
+
+  const handleUpdateProject = async (projectId: string, formData: FormData) => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          const data = {
+            nameProject: formData.get('nameProject') as string,
+            packPrice: Number(formData.get('packPrice')),
+            duration: Number(formData.get('duration')),
+            monthlyPayment: formData.get('monthlyPayment') ? Number(formData.get('monthlyPayment')) : undefined,
+            description: formData.get('description') as string || undefined,
+            gainProject: formData.get('gainProject') ? Number(formData.get('gainProject')) : undefined
+          };
+
+          const result = await updateProject(projectId, data);
+          
+          if (result.type === 'success') {
+            setMessage({ type: 'success', text: result.message });
+            setTimeout(() => {
+              setMessage(null);
+              router.refresh();
+            }, 2000);
+          } else {
+            setMessage({ type: 'error', text: result.message });
+          }
+          
+          resolve(result);
+        } catch (error) {
+          const errorResult = { type: "error", message: "Erreur lors de la mise à jour" };
+          setMessage({ type: 'error', text: errorResult.message });
+          resolve(errorResult);
+        }
+      });
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingProject) return;
+    
+    startTransition(async () => {
+      try {
+        const result = await deleteProject(deletingProject._id);
+        
+        if (result.type === 'success') {
+          setMessage({ type: 'success', text: result.message });
+          setShowDeleteModal(false);
+          setTimeout(() => {
+            setMessage(null);
+            router.refresh();
+          }, 2000);
+        } else {
+          setMessage({ type: 'error', text: result.message });
+        }
+      } catch (error) {
+        setMessage({ type: 'error', text: "Erreur lors de la suppression" });
+      }
+    });
   };
 
   const getParticipantsDisplay = (participants?: Participant[]) => {
@@ -136,8 +217,34 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
     );
   };
 
+  // Auto-hide message
+  React.useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   return (
     <>
+      {/* Message de notification global */}
+      {message && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          message.type === 'success' 
+            ? 'bg-green-100 border border-green-400 text-green-700' 
+            : 'bg-red-100 border border-red-400 text-red-700'
+        }`}>
+          <div className="flex items-center">
+            {message.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 mr-2" />
+            ) : (
+              <AlertCircle className="w-5 h-5 mr-2" />
+            )}
+            {message.text}
+          </div>
+        </div>
+      )}
+
       {/* Liste Desktop */}
       <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
@@ -247,8 +354,9 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleViewDetails(project)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 transition-colors"
                         title="Voir les détails"
+                        disabled={isPending}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -257,21 +365,25 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                           href={project.rapportUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-green-600 hover:text-green-900"
+                          className="text-green-600 hover:text-green-900 transition-colors"
                           title="Télécharger le programme"
                         >
                           <Download className="w-4 h-4" />
                         </a>
                       )}
                       <button
-                        className="text-orange-600 hover:text-orange-900"
+                        onClick={() => handleEdit(project)}
+                        className="text-orange-600 hover:text-orange-900 transition-colors disabled:opacity-50"
                         title="Modifier"
+                        disabled={isPending}
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDelete(project)}
+                        className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50"
                         title="Supprimer"
+                        disabled={isPending}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -298,6 +410,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
               <button
                 onClick={() => handleViewDetails(project)}
                 className="p-1 text-blue-600 hover:bg-blue-50 rounded flex-shrink-0 ml-2"
+                disabled={isPending}
               >
                 <Eye className="w-4 h-4" />
               </button>
@@ -339,19 +452,36 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
               {getParticipantsDisplay(project.participants)}
             </div>
 
-            {project.rapportUrl && (
-              <div className="pt-3 border-t">
+            {/* Actions Mobile */}
+            <div className="flex gap-2 pt-3 border-t">
+              {project.rapportUrl && (
                 <a
                   href={project.rapportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm"
                 >
-                  <FileText className="w-4 h-4 mr-1" />
-                  Télécharger le programme
+                  <Download className="w-4 h-4 mr-1" />
+                  PDF
                 </a>
-              </div>
-            )}
+              )}
+              <button
+                onClick={() => handleEdit(project)}
+                disabled={isPending}
+                className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-sm disabled:opacity-50"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Modifier
+              </button>
+              <button
+                onClick={() => handleDelete(project)}
+                disabled={isPending}
+                className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Supprimer
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -362,6 +492,32 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
           project={selectedProject}
+        />
+      )}
+
+      {/* Modal de modification */}
+      {showEditModal && editingProject && (
+        <EditProjectModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          project={editingProject}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setMessage({ type: 'success', text: 'Projet modifié avec succès' });
+          }}
+          onUpdateProject={handleUpdateProject}
+          isPending={isPending}
+        />
+      )}
+
+      {/* Modal de confirmation de suppression */}
+      {showDeleteModal && deletingProject && (
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          projectName={deletingProject.nameProject}
+          isPending={isPending}
         />
       )}
     </>
