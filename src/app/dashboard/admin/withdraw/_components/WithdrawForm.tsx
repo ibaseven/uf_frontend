@@ -9,15 +9,25 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Briefcase,
+  TrendingUp
 } from 'lucide-react';
-import { initiateWithdraw, confirmWithdraw } from '@/actions/withdrawActions';
+import { 
+  initiateWithdrawActions, 
+  initiateWithdrawProject,
+  confirmWithdrawActions,
+  confirmWithdrawProjects
+} from '@/actions/withdrawActions';
 import { useRouter } from 'next/navigation';
 
 interface WithdrawFormProps {
-  currentBalance: number;
+  dividendeActions: number;
+  dividendeProject: number;
   adminId: string;
 }
+
+type DividendeType = 'actions' | 'project';
 
 const PAYMENT_METHODS = [
   { value: 'wave-senegal', label: 'Wave Sénégal' },
@@ -39,7 +49,8 @@ const PAYMENT_METHODS = [
 ];
 
 const WithdrawForm: React.FC<WithdrawFormProps> = ({ 
-  currentBalance, 
+  dividendeActions,
+  dividendeProject,
   adminId
 }) => {
   const router = useRouter();
@@ -47,6 +58,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
   const [loading, setLoading] = useState(false);
   
   // Étape 1
+  const [dividendeType, setDividendeType] = useState<DividendeType>('actions');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('wave-senegal');
@@ -58,6 +70,11 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
   // Messages
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Obtenir le solde actuel en fonction du type sélectionné
+  const getCurrentBalance = () => {
+    return dividendeType === 'actions' ? dividendeActions : dividendeProject;
+  };
 
   // ========================================
   // ÉTAPE 1: INITIER LE RETRAIT
@@ -71,6 +88,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
 
     try {
       const parsedAmount = parseFloat(amount);
+      const currentBalance = getCurrentBalance();
 
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         setError('Montant invalide');
@@ -84,11 +102,21 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         return;
       }
 
-      const result = await initiateWithdraw({
-        phoneNumber,
-        amount: parsedAmount,
-        paymentMethod
-      });
+      // Appeler la fonction appropriée selon le type
+      let result;
+      if (dividendeType === 'actions') {
+        result = await initiateWithdrawActions({
+          phoneNumber,
+          amount: parsedAmount,
+          paymentMethod
+        });
+      } else {
+        result = await initiateWithdrawProject({
+          phoneNumber,
+          amount: parsedAmount,
+          paymentMethod
+        });
+      }
 
       if (result.type === 'success') {
         setSuccess(result.message || 'Code OTP envoyé par WhatsApp');
@@ -121,9 +149,17 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         return;
       }
 
-      const result = await confirmWithdraw({
-        otpCode
-      });
+      // Appeler la fonction de confirmation appropriée selon le type
+      let result;
+      if (dividendeType === 'actions') {
+        result = await confirmWithdrawActions({
+          otpCode
+        });
+      } else {
+        result = await confirmWithdrawProjects({
+          otpCode
+        });
+      }
 
       if (result.type === 'success') {
         setSuccess(result.message || 'Retrait effectué avec succès !');
@@ -149,17 +185,6 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Solde Disponible */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 mb-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-blue-100 text-sm mb-1">Solde Disponible</p>
-            <p className="text-4xl font-bold">{currentBalance.toLocaleString()} FCFA</p>
-          </div>
-          <Wallet className="w-16 h-16 text-blue-300 opacity-50" />
-        </div>
-      </div>
-
       {/* Messages */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start">
@@ -205,6 +230,46 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <form onSubmit={handleInitiate}>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Retirer de l'argent</h2>
 
+            {/* Sélection du type de dividende */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Type de dividende à retirer
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setDividendeType('actions')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    dividendeType === 'actions'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <Briefcase className="w-5 h-5 mr-2" />
+                    <span className="font-semibold">Actions</span>
+                  </div>
+                  <div className="text-sm">{dividendeActions.toLocaleString()} FCFA</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDividendeType('project')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    dividendeType === 'project'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    <span className="font-semibold">Projets</span>
+                  </div>
+                  <div className="text-sm">{dividendeProject.toLocaleString()} FCFA</div>
+                </button>
+              </div>
+            </div>
+
             {/* Numéro de téléphone */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -228,22 +293,31 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
                 <DollarSign className="w-4 h-4 inline mr-2" />
                 Montant (FCFA)
               </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Ex: 10000"
-                min="100"
-                max={currentBalance}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Ex: 10000"
+                  min="100"
+                  max={getCurrentBalance()}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setAmount(getCurrentBalance().toString())}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  MAX
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">
-                Minimum: 100 FCFA | Maximum: {currentBalance.toLocaleString()} FCFA
+                Minimum: 200 FCFA | Maximum: {getCurrentBalance().toLocaleString()} FCFA
               </p>
             </div>
 
-            {/* Méthode de paiement - LISTE */}
+            {/* Méthode de paiement */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <CreditCard className="w-4 h-4 inline mr-2" />
@@ -292,6 +366,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
               <p className="text-sm text-gray-600 mb-2">Récapitulatif</p>
               <div className="space-y-1">
                 <p className="text-lg font-semibold">{parseFloat(amount).toLocaleString()} FCFA</p>
+                <p className="text-sm text-gray-600">Type: {dividendeType === 'actions' ? 'Dividendes Actions' : 'Dividendes Projets'}</p>
                 <p className="text-sm text-gray-600">Vers: {phoneNumber}</p>
                 <p className="text-xs text-gray-500">Référence: {reference}</p>
               </div>

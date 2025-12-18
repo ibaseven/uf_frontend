@@ -31,7 +31,7 @@ export const RegisterOtpFormView = ({
   handleResendOtp,
 }: RegisterOtpFormViewProps) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const [countdown, setCountdown] = useState(300); // 5 minutes
+  const [countdown, setCountdown] = useState(120); // 2 minutes (120 secondes)
   const [canResend, setCanResend] = useState(false);
 
   // Countdown timer
@@ -68,7 +68,7 @@ export const RegisterOtpFormView = ({
 
   const handleResend = async () => {
     await handleResendOtp();
-    setCountdown(300); // Reset countdown
+    setCountdown(120); // Reset countdown à 2 minutes
     setCanResend(false);
     setOtp(""); // Clear OTP input
   };
@@ -78,11 +78,11 @@ export const RegisterOtpFormView = ({
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-             <Image
+            <Image
               src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> 
+            />
           </Link>
         </div>
       </div>
@@ -135,25 +135,26 @@ export const RegisterOtpFormView = ({
           Vérifier le code
         </Button>
         
-       {/*  <div className="text-center space-y-2">
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={!canResend}
-            className={`text-sm ${canResend ? 'text-blue-500 hover:underline' : 'text-gray-400 cursor-not-allowed'}`}
-          >
-            {canResend ? 'Renvoyer le code' : `Renvoyer disponible dans ${formatTime(countdown)}`}
-          </button>
+        <div className="text-center space-y-2">
+          {canResend && (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-sm text-blue-600 hover:underline font-medium"
+            >
+              Renvoyer le code
+            </button>
+          )}
           <div>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="text-gray-500 text-sm hover:underline"
+              className="text-gray-600 text-sm hover:underline"
             >
               Retour à l'inscription
             </button>
           </div>
-        </div> */}
+        </div>
       </form>
     </>
   );
