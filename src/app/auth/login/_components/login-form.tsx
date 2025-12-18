@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { LoginFormView } from "./login-form-view";
 import { OtpFormView } from "./otp-form-view";
 import { login } from "@/actions/login";
-import { verifyOtp } from "@/actions/verifyOtp";
-//test
+import { resendLoginOtp, verifyOtp } from "@/actions/verifyOtp";
+
+
 const LoginForm = () => {
   const router = useRouter();
   const [state, setState] = useState({
@@ -30,25 +31,18 @@ const LoginForm = () => {
   const [otp, setOtp] = useState("");
 
   const handleLogin = async (formData: FormData) => {
-   
-
     try {
       const result = await login(null, formData);
-     
       
-      setState(prevState => {
-        const newState = {
-          requiresOtp: result.requiresOtp || false,
-          telephone: result.telephone || telephone,
-          message: result.message || "",
-          type: result.type || "",
-          errors: result.errors || {},
-          userId: result.userId || "",
-        };
-        return newState;
+      setState({
+        requiresOtp: result.requiresOtp || false,
+        telephone: result.telephone || telephone,
+        message: result.message || "",
+        type: result.type || "",
+        errors: result.errors || {},
+        userId: result.userId || "",
       });
     } catch (error) {
-   
       setState({
         requiresOtp: false,
         telephone: "",
@@ -63,7 +57,6 @@ const LoginForm = () => {
   const handleVerifyOtp = async (formData: FormData) => {
     try {
       const result = await verifyOtp(null, formData);
-    
 
       setOtpState({
         type: result.type || "",
@@ -75,7 +68,6 @@ const LoginForm = () => {
         router.push(result.url);
       }
     } catch (error) {
-
       setOtpState({
         type: "error",
         message: "Erreur lors de la vérification",
@@ -84,8 +76,27 @@ const LoginForm = () => {
     }
   };
 
-  useEffect(() => {
-  }, [state]);
+  const handleResendOtp = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('userId', state.userId);
+      
+      const result = await resendLoginOtp(null, formData);
+      
+      setOtpState({
+        type: result.type || "",
+        message: result.message || "",
+        url: ""
+      });
+    } catch (error) {
+      console.error("Erreur lors du renvoi OTP:", error);
+      setOtpState({
+        type: "error",
+        message: "Erreur lors du renvoi",
+        url: ""
+      });
+    }
+  };
 
   useEffect(() => {
     if (otpState.type === "redirect" && otpState.url) {
@@ -108,10 +119,11 @@ const LoginForm = () => {
         <OtpFormView
           otp={otp}
           setOtp={setOtp}
-          telephone={telephone}
+          telephone={state.telephone}
           userId={state.userId}
           otpState={otpState}
           handleVerifyOtp={handleVerifyOtp}
+          handleResendOtp={handleResendOtp}
         />
       )}
     </div>

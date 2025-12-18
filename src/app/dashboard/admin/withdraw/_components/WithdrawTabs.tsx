@@ -1,20 +1,24 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Wallet, MinusCircle } from 'lucide-react';
+import { Wallet, MinusCircle, TrendingUp, Briefcase } from 'lucide-react';
 import WithdrawForm from './WithdrawForm';
 import DeductFeesForm from './DeductFeesForm';
 
 interface WithdrawTabsProps {
-  currentBalance: number;
-  ownerBalance: number;
+  dividendeActions: number;
+  dividendeProject: number;
+  ownerBalanceActions: number;
+  ownerBalanceProject: number;
   adminId: string;
   isTheSuperAdmin: boolean;
 }
 
 const WithdrawTabs: React.FC<WithdrawTabsProps> = ({ 
-  currentBalance,
-  ownerBalance,
+  dividendeActions,
+  dividendeProject,
+  ownerBalanceActions,
+  ownerBalanceProject,
   adminId,
   isTheSuperAdmin
 }) => {
@@ -23,10 +27,32 @@ const WithdrawTabs: React.FC<WithdrawTabsProps> = ({
   // Si pas super admin, afficher uniquement le formulaire de retrait
   if (!isTheSuperAdmin) {
     return (
-      <WithdrawForm 
-        currentBalance={currentBalance}
-        adminId={adminId}
-      />
+      <div className="max-w-4xl mx-auto">
+        {/* Affichage des soldes disponibles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm opacity-90">Dividendes Actions</p>
+              <Briefcase className="w-5 h-5 opacity-80" />
+            </div>
+            <p className="text-3xl font-bold">{dividendeActions.toLocaleString()} FCFA</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm opacity-90">Dividendes Projets</p>
+              <TrendingUp className="w-5 h-5 opacity-80" />
+            </div>
+            <p className="text-3xl font-bold">{dividendeProject.toLocaleString()} FCFA</p>
+          </div>
+        </div>
+
+        <WithdrawForm 
+          dividendeActions={dividendeActions}
+          dividendeProject={dividendeProject}
+          adminId={adminId}
+        />
+      </div>
     );
   }
 
@@ -45,9 +71,6 @@ const WithdrawTabs: React.FC<WithdrawTabsProps> = ({
           >
             <Wallet className="w-5 h-5" />
             Retirer mes dividendes
-            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-              {currentBalance.toLocaleString()} FCFA
-            </span>
           </button>
           
           <button
@@ -60,9 +83,6 @@ const WithdrawTabs: React.FC<WithdrawTabsProps> = ({
           >
             <MinusCircle className="w-5 h-5" />
             Déduire frais Owner
-            <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-              {ownerBalance.toLocaleString()} FCFA
-            </span>
           </button>
         </div>
       </div>
@@ -70,14 +90,58 @@ const WithdrawTabs: React.FC<WithdrawTabsProps> = ({
       {/* Contenu des onglets */}
       <div className="bg-white rounded-b-lg shadow-lg p-6">
         {activeTab === 'withdraw' ? (
-          <WithdrawForm 
-            currentBalance={currentBalance}
-            adminId={adminId}
-          />
+          <>
+            {/* Affichage des soldes disponibles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm opacity-90">Dividendes Actions</p>
+                  <Briefcase className="w-5 h-5 opacity-80" />
+                </div>
+                <p className="text-3xl font-bold">{dividendeActions.toLocaleString()} FCFA</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm opacity-90">Dividendes Projets</p>
+                  <TrendingUp className="w-5 h-5 opacity-80" />
+                </div>
+                <p className="text-3xl font-bold">{dividendeProject.toLocaleString()} FCFA</p>
+              </div>
+            </div>
+
+            <WithdrawForm 
+              dividendeActions={dividendeActions}
+              dividendeProject={dividendeProject}
+              adminId={adminId}
+            />
+          </>
         ) : (
-          <DeductFeesForm 
-            ownerBalance={ownerBalance}
-          />
+          <>
+            {/* Affichage des soldes Owner */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm opacity-90">Owner - Actions</p>
+                  <Briefcase className="w-5 h-5 opacity-80" />
+                </div>
+                <p className="text-3xl font-bold">{ownerBalanceActions.toLocaleString()} FCFA</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm opacity-90">Owner - Projets</p>
+                  <TrendingUp className="w-5 h-5 opacity-80" />
+                </div>
+                <p className="text-3xl font-bold">{ownerBalanceProject.toLocaleString()} FCFA</p>
+              </div>
+            </div>
+
+            <DeductFeesForm 
+              ownerBalanceActions={ownerBalanceActions}
+              ownerBalanceProject={ownerBalanceProject}
+            />
+          </>
         )}
       </div>
     </div>

@@ -9,7 +9,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 interface OtpFormViewProps {
   otp: string;
@@ -18,6 +18,7 @@ interface OtpFormViewProps {
   userId: string;
   otpState: any;
   handleVerifyOtp: (formData: FormData) => Promise<void>;
+  handleResendOtp: () => Promise<void>;
 }
 
 export const OtpFormView = ({
@@ -27,8 +28,33 @@ export const OtpFormView = ({
   userId,
   otpState,
   handleVerifyOtp,
+  handleResendOtp,
 }: OtpFormViewProps) => {
   const formRef = useRef<HTMLFormElement>(null);
+  const [countdown, setCountdown] = useState(120); // 2 minutes
+  const [canResend, setCanResend] = useState(false);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,28 +66,35 @@ export const OtpFormView = ({
     }
   };
 
+  const handleResend = async () => {
+    await handleResendOtp();
+    setCountdown(120); // Reset countdown à 2 minutes
+    setCanResend(false);
+    setOtp(""); // Clear OTP input
+  };
+
   return (
     <>
       <div className="py-8 flex items-center justify-center">
         <div className="w-36">
           <Link href="/">
-             <Image
+            <Image
               src={logo}
               alt="Image d'authentification"
               className="object-contain"
-            /> 
+            />
           </Link>
         </div>
       </div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Vérifier le code OTP</h2>
+        <h2 className="text-2xl font-bold mb-2">Vérification SMS</h2>
         <p className="text-gray-600">
-          Entrez le code OTP envoyé à votre numéro de téléphone : {telephone}
+          Un code de vérification a été envoyé via SMS au numéro : {telephone}
         </p>
       </div>
       <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <Label htmlFor="otp">Code OTP (6 chiffres)</Label>
+          <Label htmlFor="otp">Code de vérification (6 chiffres)</Label>
           <div className="flex justify-center">
             <InputOTP
               maxLength={6}
@@ -81,9 +114,19 @@ export const OtpFormView = ({
           <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="otp" value={otp} />
         </div>
+
+        <div className="text-center text-sm text-gray-600">
+          {countdown > 0 ? (
+            <span>Code expire dans: <span className="font-medium text-red-600">{formatTime(countdown)}</span></span>
+          ) : (
+            <span className="text-red-600 font-medium">Code expiré</span>
+          )}
+        </div>
+
         {otpState?.message && (
           <AlertFeedback type={otpState?.type} message={otpState?.message} />
         )}
+        
         <Button 
           type="submit" 
           className="w-full"
@@ -91,14 +134,26 @@ export const OtpFormView = ({
         >
           Vérifier le code
         </Button>
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="text-blue-500 text-sm hover:underline"
-          >
-            Renvoyer le code
-          </button>
+        
+        <div className="text-center space-y-2">
+          {canResend && (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-sm text-blue-600 hover:underline font-medium"
+            >
+              Renvoyer le code
+            </button>
+          )}
+          <div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="text-gray-600 text-sm hover:underline"
+            >
+              Retour à la connexion
+            </button>
+          </div>
         </div>
       </form>
     </>

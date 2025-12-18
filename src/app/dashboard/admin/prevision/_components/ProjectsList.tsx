@@ -151,6 +151,8 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
     startTransition(async () => {
       try {
         const result = await deleteProject(deletingProject._id);
+    
+       
         
         if (result.type === 'success') {
           setMessage({ type: 'success', text: result.message });
