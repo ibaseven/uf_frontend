@@ -20,6 +20,7 @@ const ActionnairesAdminPage = async ({ searchParams }: PageProps) => {
     total_actions: actionnaires.reduce((sum: number, a: any) => sum + (a.actionsNumber || 0), 0),
     total_dividendes: actionnaires.reduce((sum: number, a: any) => sum + (a.dividende || 0), 0)
   };
+  //console.log(response);
   
   return (
     <ActionnairesAdminView

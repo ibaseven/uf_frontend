@@ -334,11 +334,13 @@ export const deleteProject = async (projectId: string) => {
       url: `${DELETE_PROJECT_URL}/${projectId}`
     });
 
-    if (response.message === "Update Succesful" || response.message?.includes("succès")) {
+
+    if (response.success === true) {
       return {
         type: "success",
         message: "Projet supprimé avec succès"
       };
+
     } else {
       return {
         type: "error",

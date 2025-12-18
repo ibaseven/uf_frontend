@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { createdOrUpdated } from "@/lib/api";
-import { WITHDRAW_INITIATE_URL, WITHDRAW_CONFIRM_URL } from "@/lib/endpoint";
+import { WITHDRAW_INITIATE_URL_ACTIONS, WITHDRAW_CONFIRM_URL_ACTIONS, WITHDRAW_CONFIRM_URL_PROJECTS, WITHDRAW_INITIATE_URL_PROJECTS } from "@/lib/endpoint";
 
 // ========================================
 // SCHÉMAS DE VALIDATION
@@ -44,7 +44,7 @@ const ConfirmWithdrawSchema = z.object({
 // INITIER LE RETRAIT
 // ========================================
 
-export const initiateWithdraw = async (formData: {
+export const initiateWithdrawActions = async (formData: {
   phoneNumber: string;
   amount: number;
   paymentMethod: string;
@@ -65,7 +65,7 @@ export const initiateWithdraw = async (formData: {
 
     // Appel API
     const response = await createdOrUpdated({
-      url: WITHDRAW_INITIATE_URL,
+      url: WITHDRAW_INITIATE_URL_ACTIONS,
       data: {
         phoneNumber: validatedData.phoneNumber,
         amount: validatedData.amount,
@@ -73,7 +73,7 @@ export const initiateWithdraw = async (formData: {
       },
       updated: false
     });
-console.log(response);
+//console.log(response);
 
     if (response.success) {
       return {
@@ -98,11 +98,64 @@ console.log(response);
   }
 };
 
+export const initiateWithdrawProject = async (formData: {
+  phoneNumber: string;
+  amount: number;
+  paymentMethod: string;
+}) => {
+  try {
+    // Validation
+    const validation = InitiateWithdrawSchema.safeParse(formData);
+
+    if (!validation.success) {
+      return {
+        type: "error",
+        errors: validation.error.flatten().fieldErrors,
+        message: "Données invalides"
+      };
+    }
+
+    const validatedData = validation.data;
+
+    // Appel API
+    const response = await createdOrUpdated({
+      url: WITHDRAW_INITIATE_URL_PROJECTS,
+      data: {
+        phoneNumber: validatedData.phoneNumber,
+        amount: validatedData.amount,
+        paymentMethod: validatedData.paymentMethod
+      },
+      updated: false
+    });
+//console.log(response);
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message,
+        data: response.data
+      };
+    }
+
+    return {
+      type: "error",
+      message: response.message || "Erreur lors de l'initiation du retrait"
+    };
+
+  } catch (error: any) {
+    console.error("Erreur dans initiateWithdraw:", error);
+
+    return {
+      type: "error",
+      message: error.response?.data?.message || "Erreur lors de l'initiation du retrait"
+    };
+  }
+};
 // ========================================
 // CONFIRMER LE RETRAIT
 // ========================================
 
-export const confirmWithdraw = async (formData: {
+export const confirmWithdrawActions = async (formData: {
   otpCode: string;
 }) => {
   try {
@@ -121,7 +174,57 @@ export const confirmWithdraw = async (formData: {
 
     // Appel API
     const response = await createdOrUpdated({
-      url: WITHDRAW_CONFIRM_URL,
+      url: WITHDRAW_CONFIRM_URL_ACTIONS,
+      data: {
+        otpCode: validatedData.otpCode
+      },
+      updated: false
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message,
+        transaction: response.transaction,
+        dividends: response.dividends
+      };
+    }
+
+    return {
+      type: "error",
+      message: response.message || "Erreur lors de la confirmation du retrait"
+    };
+
+  } catch (error: any) {
+    console.error("Erreur dans confirmWithdraw:", error);
+
+    return {
+      type: "error",
+      message: error.response?.data?.message || "Erreur lors de la confirmation du retrait"
+    };
+  }
+};
+
+export const confirmWithdrawProjects = async (formData: {
+  otpCode: string;
+}) => {
+  try {
+    // Validation
+    const validation = ConfirmWithdrawSchema.safeParse(formData);
+
+    if (!validation.success) {
+      return {
+        type: "error",
+        errors: validation.error.flatten().fieldErrors,
+        message: "Code OTP invalide"
+      };
+    }
+
+    const validatedData = validation.data;
+
+    // Appel API
+    const response = await createdOrUpdated({
+      url: WITHDRAW_CONFIRM_URL_PROJECTS,
       data: {
         otpCode: validatedData.otpCode
       },

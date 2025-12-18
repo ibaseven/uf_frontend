@@ -1,6 +1,6 @@
 "use server";
 
-import { VERIFYOTP_URL } from "@/lib/endpoint";
+import { RESEND_LOGIN_OTP_URL, VERIFYOTP_URL } from "@/lib/endpoint";
 import { getRedirectUrlForRole } from "../../routes";
 import axios from "axios";
 import { cookies } from "next/headers";
@@ -70,3 +70,54 @@ export const verifyOtp = async (state: any, formData: FormData) => {
   }
 };
 
+export const resendLoginOtp = async (state: any, formData: FormData) => {
+  try {
+    const userId = formData.get("userId");
+    if (!userId) {
+      console.error("❌ ID utilisateur manquant");
+      return {
+        type: "error",
+        message: "ID utilisateur manquant",
+      };
+    }
+    const res = await axios.post(RESEND_LOGIN_OTP_URL, {
+      userId,
+    });
+   
+    
+    // Vérifier si la réponse contient les données nécessaires
+    if (!res.data) {
+      return {
+        type: "error",
+        message: "Réponse invalide du serveur",
+      };
+    }
+    if (res.data.success) {
+     
+      
+      return {
+        type: "success",
+        message: res.data.message || "Nouveau code envoyé",
+        expiresIn: res.data.expiresIn || 120
+      };
+    } else {
+      console.error("❌ Échec du renvoi (success=false)");
+      return {
+        type: "error",
+        message: res.data.message || "Erreur lors du renvoi",
+      };
+    }
+
+  } catch (error: any) {
+    console.error("=== ERREUR RESEND LOGIN OTP ===");
+    console.error("Message d'erreur:", error?.response?.data?.message);
+    console.error("Status:", error?.response?.status);
+    console.error("Données reçues:", error?.response?.data);
+    console.error("Erreur complète:", error);
+    
+    return {
+      type: "error",
+      message: error?.response?.data?.message || "Erreur lors du renvoi du code",
+    };
+  }
+};

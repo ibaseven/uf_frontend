@@ -15,6 +15,7 @@ const UpdateUserSchema = z.object({
   cni: z.string().optional(),
   dateNaissance: z.string().optional(),
   dividende: z.number().min(0).optional(),
+  actionsNumber: z.number().min(0).optional(),
 });
 
 export const updateUserInfo = async (formData) => {
@@ -42,6 +43,7 @@ export const updateUserInfo = async (formData) => {
       cni: validatedData.cni,
       dateNaissance: validatedData.dateNaissance,
       dividende: validatedData.dividende,
+      actionsNumber:validatedData.actionsNumber
     };
 
     const response = await createdOrUpdated({
