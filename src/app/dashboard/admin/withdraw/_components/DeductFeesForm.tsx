@@ -174,21 +174,7 @@ const DeductFeesForm: React.FC<DeductFeesFormProps> = ({
                 <div className="text-sm">{ownerBalanceActions.toLocaleString()} FCFA</div>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setDividendeType('project')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  dividendeType === 'project'
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  <span className="font-semibold">Owner - Projets</span>
-                </div>
-                <div className="text-sm">{ownerBalanceProject.toLocaleString()} FCFA</div>
-              </button>
+             
             </div>
           </div>
 

@@ -90,3 +90,7 @@ export const UPDATE_PROFILE_URL = `${API_URL}/updateProfile`;
 
 export const UPDATE_PROJECT_URL = `${API_URL}/updateProject`;
 export const DELETE_PROJECT_URL = `${API_URL}/deleteProject`;
+export const DISTRIBUTE_PROJECT_DIVIDENDE_URL = `${API_URL}/project/dividende`;
+export const CALCULATE_DIVIDENDE_URL = `${API_URL}/calculateDividende`;
+export const BULK_CREATE_USERS_URL = `${API_URL}/admin/users/bulk-create`;
+export const CREATE_USER_WITH_PASSWORD_URL = `${API_URL}/admin/users/create-with-password`;

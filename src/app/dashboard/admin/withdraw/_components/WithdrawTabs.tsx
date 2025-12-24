@@ -61,17 +61,7 @@ const WithdrawTabs: React.FC<WithdrawTabsProps> = ({
       {/* Onglets */}
       <div className="bg-white rounded-t-lg shadow-sm border-b">
         <div className="flex">
-          <button
-            onClick={() => setActiveTab('withdraw')}
-            className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${
-              activeTab === 'withdraw'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-            }`}
-          >
-            <Wallet className="w-5 h-5" />
-            Retirer mes dividendes
-          </button>
+          
           
           <button
             onClick={() => setActiveTab('deduct')}
