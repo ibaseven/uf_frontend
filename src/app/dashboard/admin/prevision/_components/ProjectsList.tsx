@@ -1,9 +1,9 @@
 // _components/ProjectsList.tsx
 "use client";
 import React, { useState, useTransition } from 'react';
-import { 
-  Calendar, 
-  DollarSign, 
+import {
+  Calendar,
+  DollarSign,
   Clock,
   Eye,
   Edit,
@@ -13,13 +13,15 @@ import {
   TrendingUp,
   Users,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Coins
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import ProjectDetailsModal from './ProjectDetailsModal';
 import EditProjectModal from './EditProjectModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
-import { updateProject, deleteProject } from '@/actions/projectActions';
+import DistributeDividendeModal from './DistributeDividendeModal';
+import { updateProject, deleteProject, distributeProjectDividende } from '@/actions/projectActions';
 
 interface Participant {
   userId: {
@@ -73,8 +75,10 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDistributeModal, setShowDistributeModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [distributingProject, setDistributingProject] = useState<Project | null>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
@@ -108,6 +112,11 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
   const handleDelete = (project: Project) => {
     setDeletingProject(project);
     setShowDeleteModal(true);
+  };
+
+  const handleDistribute = (project: Project) => {
+    setDistributingProject(project);
+    setShowDistributeModal(true);
   };
 
   const handleUpdateProject = async (projectId: string, formData: FormData) => {
@@ -147,13 +156,13 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
 
   const handleConfirmDelete = async () => {
     if (!deletingProject) return;
-    
+
     startTransition(async () => {
       try {
         const result = await deleteProject(deletingProject._id);
-    
-       
-        
+
+
+
         if (result.type === 'success') {
           setMessage({ type: 'success', text: result.message });
           setShowDeleteModal(false);
@@ -167,6 +176,35 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
       } catch (error) {
         setMessage({ type: 'error', text: "Erreur lors de la suppression" });
       }
+    });
+  };
+
+  const handleDistributeDividende = async (projectId: string, totalAmount: number) => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          const result = await distributeProjectDividende({
+            projectId,
+            totalAmount
+          });
+
+          if (result.type === 'success') {
+            setMessage({ type: 'success', text: result.message });
+            setTimeout(() => {
+              setMessage(null);
+              router.refresh();
+            }, 2000);
+          } else {
+            setMessage({ type: 'error', text: result.message });
+          }
+
+          resolve(result);
+        } catch (error) {
+          const errorResult = { type: "error", message: "Erreur lors de la distribution" };
+          setMessage({ type: 'error', text: errorResult.message });
+          resolve(errorResult);
+        }
+      });
     });
   };
 
@@ -374,6 +412,14 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                         </a>
                       )}
                       <button
+                        onClick={() => handleDistribute(project)}
+                        className="text-purple-600 hover:text-purple-900 transition-colors disabled:opacity-50"
+                        title="Distribuer les dividendes"
+                        disabled={isPending}
+                      >
+                        <Coins className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleEdit(project)}
                         className="text-orange-600 hover:text-orange-900 transition-colors disabled:opacity-50"
                         title="Modifier"
@@ -455,7 +501,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
             </div>
 
             {/* Actions Mobile */}
-            <div className="flex gap-2 pt-3 border-t">
+            <div className="flex gap-2 pt-3 border-t flex-wrap">
               {project.rapportUrl && (
                 <a
                   href={project.rapportUrl}
@@ -467,6 +513,14 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                   PDF
                 </a>
               )}
+              <button
+                onClick={() => handleDistribute(project)}
+                disabled={isPending}
+                className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm disabled:opacity-50"
+              >
+                <Coins className="w-4 h-4 mr-1" />
+                Distribuer
+              </button>
               <button
                 onClick={() => handleEdit(project)}
                 disabled={isPending}
@@ -519,6 +573,21 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           projectName={deletingProject.nameProject}
+          isPending={isPending}
+        />
+      )}
+
+      {/* Modal de distribution de dividendes */}
+      {showDistributeModal && distributingProject && (
+        <DistributeDividendeModal
+          isOpen={showDistributeModal}
+          onClose={() => setShowDistributeModal(false)}
+          project={distributingProject}
+          onSuccess={() => {
+            setShowDistributeModal(false);
+            setMessage({ type: 'success', text: 'Dividendes distribués avec succès' });
+          }}
+          onDistribute={handleDistributeDividende}
           isPending={isPending}
         />
       )}
