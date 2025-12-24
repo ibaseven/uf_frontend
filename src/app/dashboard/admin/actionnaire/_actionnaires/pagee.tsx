@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useTransition, useMemo, useEffect } from 'react';
-import { 
-  Share, 
-  DollarSign, 
-  Users, 
-  UserCheck, 
+import {
+  Share,
+  DollarSign,
+  Users,
+  UserCheck,
   UserX,
   UserPlus,
-  Calendar, 
+  Calendar,
   RefreshCw,
   TrendingUp,
   AlertCircle,
@@ -29,12 +29,15 @@ import {
   CreditCard,
   Cake,
   Shield,
-  Settings
+  Settings,
+  Calculator
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import ActionnairesList from './ActionnairesList';
-import { updateUserInfo, deleteUser } from '@/actions/actionnaires';
+import { updateUserInfo, deleteUser, calculateDividende, createUserWithRandomPassword } from '@/actions/actionnaires';
+import CalculateDividendeModal from './CalculateDividendeModal';
+import CreateUserModal from './CreateUserModal';
 
 // Types
 interface Actionnaire {
@@ -120,6 +123,8 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'single' | 'multiple', userId?: string, userName?: string } | null>(null);
+  const [showCalculateModal, setShowCalculateModal] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -221,7 +226,59 @@ const confirmDelete = async () => {
     setDeleteTarget(null);
   };
 
-  
+  // Handler pour calculer les dividendes
+  const handleCalculateDividende = async (priceAction: number) => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          const result = await calculateDividende({ PriceAction: priceAction });
+
+          if (result.type === 'success') {
+            setMessage({ type: 'success', text: result.message });
+            setTimeout(() => {
+              setMessage(null);
+              router.refresh();
+            }, 2000);
+          } else {
+            setMessage({ type: 'error', text: result.message });
+          }
+
+          resolve(result);
+        } catch (error) {
+          const errorResult = { type: "error", message: "Erreur lors du calcul" };
+          setMessage({ type: 'error', text: errorResult.message });
+          resolve(errorResult);
+        }
+      });
+    });
+  };
+
+  // Handler pour créer un utilisateur
+  const handleCreateUser = async (formData: any) => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        try {
+          const result = await createUserWithRandomPassword(formData);
+
+          if (result.type === 'success') {
+            setMessage({ type: 'success', text: result.message });
+            setTimeout(() => {
+              setMessage(null);
+              router.refresh();
+            }, 2000);
+          } else {
+            setMessage({ type: 'error', text: result.message });
+          }
+
+          resolve(result);
+        } catch (error) {
+          const errorResult = { type: "error", message: "Erreur lors de la création" };
+          setMessage({ type: 'error', text: errorResult.message });
+          resolve(errorResult);
+        }
+      });
+    });
+  };
 
   // Ouvrir le modal d'édition
   const handleEditUser = (actionnaire: Actionnaire) => {
@@ -476,25 +533,26 @@ const confirmDelete = async () => {
           </div>
 
           {/* Desktop buttons */}
-          {/* <div className="hidden sm:flex space-x-3">
+          <div className="hidden sm:flex space-x-3">
             <button
-              onClick={toggleSelectionMode}
+              onClick={() => setShowCreateUserModal(true)}
               disabled={isPending}
-              className={`flex items-center px-3 lg:px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
-                isSelectionMode 
-                  ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className="flex items-center px-3 lg:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
-              <UserMinus className="w-4 h-4 mr-2" />
-              <span className="hidden lg:inline">
-                {isSelectionMode ? 'Annuler sélection' : 'Sélection multiple'}
-              </span>
-              <span className="lg:hidden">
-                {isSelectionMode ? 'Annuler' : 'Sélection'}
-              </span>
+              <UserPlus className="w-4 h-4 mr-2" />
+              <span className="hidden lg:inline">Créer utilisateur</span>
+              <span className="lg:hidden">Créer</span>
             </button>
-          </div> */}
+            <button
+              onClick={() => setShowCalculateModal(true)}
+              disabled={isPending}
+              className="flex items-center px-3 lg:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              <span className="hidden lg:inline">Calculer les dividendes</span>
+              <span className="lg:hidden">Calculer</span>
+            </button>
+          </div>
         </div>
 
         {/* Mobile action buttons */}
@@ -502,18 +560,25 @@ const confirmDelete = async () => {
           <div className="mt-4 sm:hidden space-y-2">
             <button
               onClick={() => {
-                toggleSelectionMode();
+                setShowCreateUserModal(true);
                 setIsMobileMenuOpen(false);
               }}
               disabled={isPending}
-              className={`w-full flex items-center px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                isSelectionMode 
-                  ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className="w-full flex items-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <UserMinus className="w-4 h-4 mr-3" />
-              {isSelectionMode ? 'Annuler sélection' : 'Sélection multiple'}
+              <UserPlus className="w-4 h-4 mr-3" />
+              Créer un utilisateur
+            </button>
+            <button
+              onClick={() => {
+                setShowCalculateModal(true);
+                setIsMobileMenuOpen(false);
+              }}
+              disabled={isPending}
+              className="w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Calculator className="w-4 h-4 mr-3" />
+              Calculer les dividendes
             </button>
           </div>
         )}
@@ -1164,6 +1229,35 @@ const confirmDelete = async () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de calcul des dividendes */}
+      {showCalculateModal && (
+        <CalculateDividendeModal
+          isOpen={showCalculateModal}
+          onClose={() => setShowCalculateModal(false)}
+          totalActionnaires={statistiques.nombre_total_actionnaires}
+          totalActions={statistiques.total_actions}
+          onSuccess={() => {
+            setShowCalculateModal(false);
+            setMessage({ type: 'success', text: 'Dividendes calculés avec succès' });
+          }}
+          onCalculate={handleCalculateDividende}
+          isPending={isPending}
+        />
+      )}
+
+      {/* Modal de création d'utilisateur */}
+      {showCreateUserModal && (
+        <CreateUserModal
+          isOpen={showCreateUserModal}
+          onClose={() => setShowCreateUserModal(false)}
+          onSuccess={() => {
+            setMessage({ type: 'success', text: 'Utilisateur créé avec succès' });
+          }}
+          onCreateUser={handleCreateUser}
+          isPending={isPending}
+        />
+      )}
     </div>
   );
 };

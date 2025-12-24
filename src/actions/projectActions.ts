@@ -2,14 +2,15 @@
 
 import { z } from 'zod';
 import { createdOrUpdated, deleteWithAxios } from '@/lib/api';
-import { 
-  PARTICIPATE_PROJECT_URL, 
+import {
+  PARTICIPATE_PROJECT_URL,
   PAY_PROJECT_PARTICIPATION_URL,
-  ADD_PROJECT_URL, 
+  ADD_PROJECT_URL,
   DECREASE_PARTICIPANT_PACKS_URL,
   INCREASE_PARTICIPANT_PACKS_URL,
-  UPDATE_PROJECT_URL, 
-  DELETE_PROJECT_URL 
+  UPDATE_PROJECT_URL,
+  DELETE_PROJECT_URL,
+  DISTRIBUTE_PROJECT_DIVIDENDE_URL
 } from '@/lib/endpoint';
 
 // Schemas de validation
@@ -350,17 +351,79 @@ export const deleteProject = async (projectId: string) => {
 
   } catch (error: any) {
     console.error("Erreur dans deleteProject:", error);
-    
+
     if (error.response?.data?.message) {
       return {
         type: "error",
         message: error.response.data.message
       };
     }
-    
+
     return {
       type: "error",
       message: "Erreur lors de la suppression du projet"
+    };
+  }
+};
+
+// Schema de validation pour la distribution des dividendes
+const DistributeProjectDividendeSchema = z.object({
+  projectId: z.string().min(1, "L'ID du projet est requis"),
+  totalAmount: z.number().min(1, "Le montant total doit être supérieur à 0")
+});
+
+// Action : Distribuer les dividendes d'un projet
+export const distributeProjectDividende = async (formData: {
+  projectId: string;
+  totalAmount: number;
+}) => {
+  try {
+    // Validation des données
+    const validation = DistributeProjectDividendeSchema.safeParse(formData);
+
+    if (!validation.success) {
+      return {
+        type: "error",
+        errors: validation.error.flatten().fieldErrors,
+        message: "Données invalides"
+      };
+    }
+
+    const validatedData = validation.data;
+
+    // Appel à l'API de distribution
+    const response = await createdOrUpdated({
+      url: DISTRIBUTE_PROJECT_DIVIDENDE_URL,
+      data: validatedData
+    });
+
+    if (response.message === "Distribution effectuée selon amountPaid" || response.success) {
+      return {
+        type: "success",
+        message: response.message || "Distribution effectuée avec succès",
+        totalDistribue: response.totalDistribue,
+        participantsPayes: response.participantsPayes
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la distribution"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans distributeProjectDividende:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de la distribution des dividendes"
     };
   }
 };
