@@ -30,7 +30,8 @@ import {
   Cake,
   Shield,
   Settings,
-  Calculator
+  Calculator,
+  MessageCircle
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -38,6 +39,7 @@ import ActionnairesList from './ActionnairesList';
 import { updateUserInfo, deleteUser, calculateDividende, createUserWithRandomPassword } from '@/actions/actionnaires';
 import CalculateDividendeModal from './CalculateDividendeModal';
 import CreateUserModal from './CreateUserModal';
+import SendWhatsAppInvitationsModal from './SendWhatsAppInvitationsModal';
 
 // Types
 interface Actionnaire {
@@ -125,6 +127,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'single' | 'multiple', userId?: string, userName?: string } | null>(null);
   const [showCalculateModal, setShowCalculateModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showWhatsAppInvitationsModal, setShowWhatsAppInvitationsModal] = useState(false);
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -552,6 +555,15 @@ const confirmDelete = async () => {
               <span className="hidden lg:inline">Calculer les dividendes</span>
               <span className="lg:hidden">Calculer</span>
             </button>
+            <button
+              onClick={() => setShowWhatsAppInvitationsModal(true)}
+              disabled={isPending}
+              className="flex items-center px-3 lg:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              <span className="hidden lg:inline">Invitations WhatsApp</span>
+              <span className="lg:hidden">WhatsApp</span>
+            </button>
           </div>
         </div>
 
@@ -579,6 +591,17 @@ const confirmDelete = async () => {
             >
               <Calculator className="w-4 h-4 mr-3" />
               Calculer les dividendes
+            </button>
+            <button
+              onClick={() => {
+                setShowWhatsAppInvitationsModal(true);
+                setIsMobileMenuOpen(false);
+              }}
+              disabled={isPending}
+              className="w-full flex items-center px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <MessageCircle className="w-4 h-4 mr-3" />
+              Envoyer invitations WhatsApp
             </button>
           </div>
         )}
@@ -1256,6 +1279,14 @@ const confirmDelete = async () => {
           }}
           onCreateUser={handleCreateUser}
           isPending={isPending}
+        />
+      )}
+
+      {/* Modal d'envoi d'invitations WhatsApp */}
+      {showWhatsAppInvitationsModal && (
+        <SendWhatsAppInvitationsModal
+          isOpen={showWhatsAppInvitationsModal}
+          onClose={() => setShowWhatsAppInvitationsModal(false)}
         />
       )}
     </div>
