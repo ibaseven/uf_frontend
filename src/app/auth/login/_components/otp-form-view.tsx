@@ -87,9 +87,9 @@ export const OtpFormView = ({
         </div>
       </div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Vérification SMS</h2>
+        <h2 className="text-2xl font-bold mb-2">Vérification Whatsapp</h2>
         <p className="text-gray-600">
-          Un code de vérification a été envoyé via SMS au numéro : {telephone}
+          Un code de vérification a été envoyé via Whatsapp au numéro : {telephone}
         </p>
       </div>
       <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>

@@ -73,7 +73,7 @@ export default async function ForgetPasswordPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                  <span>Recevez le code sur SMS</span>
+                  <span>Recevez le code sur Whatsapp</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">3</div>
