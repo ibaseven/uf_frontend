@@ -94,3 +94,5 @@ export const DISTRIBUTE_PROJECT_DIVIDENDE_URL = `${API_URL}/project/dividende`;
 export const CALCULATE_DIVIDENDE_URL = `${API_URL}/calculateDividende`;
 export const BULK_CREATE_USERS_URL = `${API_URL}/admin/users/bulk-create`;
 export const CREATE_USER_WITH_PASSWORD_URL = `${API_URL}/admin/users/create-with-password`;
+export const SEND_WHATSAPP_INVITATIONS_URL = `${API_URL}/send-whatsapp-invitations`;
+export const SEND_PASSWORDS_ACTIONNAIRES_URL = `${API_URL}/send-passwords-actionnaires`;

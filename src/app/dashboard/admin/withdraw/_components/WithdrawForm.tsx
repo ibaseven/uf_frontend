@@ -388,7 +388,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
                 required
               />
               <p className="text-xs text-gray-500 mt-1 text-center">
-                Code envoyé par SMS (valide 5 minutes)
+                Code envoyé par Whatsapp (valide 5 minutes)
               </p>
             </div>
 

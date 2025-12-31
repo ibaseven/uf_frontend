@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { createdOrUpdated, deleteWithAxios } from "@/lib/api";
-import { UPDATE_USER_URL, DELETE_USER_URL, CALCULATE_DIVIDENDE_URL, BULK_CREATE_USERS_URL, CREATE_USER_WITH_PASSWORD_URL } from "@/lib/endpoint";
+import { UPDATE_USER_URL, DELETE_USER_URL, CALCULATE_DIVIDENDE_URL, BULK_CREATE_USERS_URL, CREATE_USER_WITH_PASSWORD_URL, SEND_WHATSAPP_INVITATIONS_URL, SEND_PASSWORDS_ACTIONNAIRES_URL } from "@/lib/endpoint";
 
 const UpdateUserSchema = z.object({
   userId: z.string().min(1, { message: "ID de l'utilisateur requis" }),
@@ -325,6 +325,90 @@ export const bulkCreateUsersWithRandomPasswords = async (formData: {
     return {
       type: "error",
       message: "Erreur lors de la création des utilisateurs"
+    };
+  }
+};
+
+// Action : Envoyer les invitations WhatsApp à tous les actionnaires
+export const sendWhatsAppInvitations = async () => {
+  try {
+    const response = await createdOrUpdated({
+      url: SEND_WHATSAPP_INVITATIONS_URL,
+      data: {}
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message || "Invitations WhatsApp envoyées avec succès",
+        sent: response.sent,
+        errors: response.errors,
+        totalActionnaires: response.totalActionnaires,
+        totalSent: response.totalSent,
+        totalErrors: response.totalErrors
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de l'envoi des invitations"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans sendWhatsAppInvitations:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de l'envoi des invitations WhatsApp"
+    };
+  }
+};
+
+// Action : Envoyer les mots de passe à tous les actionnaires
+export const sendPasswordsToActionnaires = async () => {
+  try {
+    const response = await createdOrUpdated({
+      url: SEND_PASSWORDS_ACTIONNAIRES_URL,
+      data: {}
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message || "Mots de passe envoyés avec succès",
+        sent: response.sent,
+        errors: response.errors,
+        totalActionnaires: response.totalActionnaires,
+        totalSent: response.totalSent,
+        totalErrors: response.totalErrors
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de l'envoi des mots de passe"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans sendPasswordsToActionnaires:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de l'envoi des mots de passe aux actionnaires"
     };
   }
 };
