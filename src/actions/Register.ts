@@ -160,7 +160,7 @@ export const initiateRegister = async (state: any, formData: FormData) => {
                 telephone: telephone,
                 tempUserId: res.data.tempUserId,
                 type: "success",
-                message: res.data.message || "Code de vérification envoyé via SMS",
+                message: res.data.message || "Code de vérification envoyé via Whatsapp",
                 errors: {}
             };
         } else {
@@ -320,7 +320,7 @@ export const resendRegisterOtp = async (state: any, formData: FormData) => {
         if (res.data.success) {
             return {
                 type: "success",
-                message: res.data.message || "Nouveau code envoyé via SMS"
+                message: res.data.message || "Nouveau code envoyé via Whatsapp"
             };
         } else {
             return {

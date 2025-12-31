@@ -688,7 +688,7 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
                 <Phone className="w-8 h-8 text-blue-500" />
               </div>
               <p className="text-gray-600">
-                Un code de vérification a été envoyé à votre numéro SMS
+                Un code de vérification a été envoyé à votre numéro Whatsapp
               </p>
               {withdrawalData && (
                 <p className="text-sm text-gray-500 mt-2">

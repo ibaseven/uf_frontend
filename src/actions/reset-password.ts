@@ -37,7 +37,7 @@ export const requestPasswordReset = async (state: any, formData: FormData) => {
         telephone: telephone,
         userId: res.data.userId,
         type: "success",
-        message: "Un code de réinitialisation a été envoyé à votre numéro SMS",
+        message: "Un code de réinitialisation a été envoyé à votre numéro Whatsapp",
         expiresIn: res.data.expiresIn || "10 minutes"
       };
     } else {
