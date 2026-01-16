@@ -28,8 +28,8 @@ export const login = async (state: any, formData: FormData) => {
 
     // Vérifiez si la réponse contient un message indiquant que l'OTP a été envoyé
     // Gérer les deux formats: requireOTP et requiresOtp
-    if (res.data.requireOTP || res.data.requiresOtp || 
-        res.data.message.includes("code de vérification") || 
+    if (res.data.requireOTP || res.data.requiresOtp ||
+        res.data.message.includes("code de vérification") ||
         res.data.message.includes("WhatsApp")) {
       return {
         requiresOtp: true, // Toujours retourner requiresOtp (avec s et p minuscule)
@@ -37,6 +37,24 @@ export const login = async (state: any, formData: FormData) => {
         userId: res.data.userId,
         type: "success",
         message: "Veuillez entrer le code OTP envoyé à votre numéro de téléphone",
+      };
+    } else if (res.data.token) {
+      // Connexion réussie sans OTP - stocker le token et rediriger
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+
+      cookieStore.set("token", res.data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        maxAge: 60 * 60 * 24, // 24 heures
+        path: "/",
+      });
+
+      return {
+        type: "redirect",
+        message: "Connexion réussie",
+        url: "/dashboard/actionnaire"
       };
     } else {
       return {
