@@ -31,7 +31,10 @@ import {
   Shield,
   Settings,
   Calculator,
-  MessageCircle
+  MessageCircle,
+  UserCog,
+  EyeOff,
+  Eye
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -60,6 +63,12 @@ interface Actionnaire {
   nationalite?: string;
   cni?: string;
   dateNaissance?: string;
+  parrain?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    telephone: string;
+  } | string;
 }
 
 interface Statistiques {
@@ -80,13 +89,15 @@ interface EditForm {
   lastName: string;
   telephone: string;
   dividende: number;
-  actionsNumber:number;
+  actionsNumber: number;
   adresse: string;
   ville: string;
   pays: string;
   nationalite: string;
   cni: string;
   dateNaissance: string;
+  password: string;
+  parrain: string;
 }
 
 interface Message {
@@ -106,6 +117,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   const [isPending, startTransition] = useTransition();
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Actionnaire | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({
     firstName: '',
     lastName: '',
@@ -117,7 +129,9 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     nationalite: '',
     cni: '',
     dateNaissance: '',
-    actionsNumber:0,
+    actionsNumber: 0,
+    password: '',
+    parrain: '',
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -163,7 +177,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   };
 
   const selectAllUsers = () => {
-    const allUserIds = filteredActionnaires.map(user => user.id);
+    const allUserIds = filteredActionnaires.map(user => user._id);
     setSelectedUsers(allUserIds);
   };
 
@@ -190,39 +204,40 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     requestDeleteConfirmation('single', userId, userName);
   };
 
-const confirmDelete = async () => {
-  if (!deleteTarget || deleteTarget.type !== 'single' || !deleteTarget.userId) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget || deleteTarget.type !== 'single' || !deleteTarget.userId) return;
 
-  startTransition(async () => {
-    try {
-      const result = await deleteUser({ userId: deleteTarget.userId });
+    startTransition(async () => {
+      try {
+        const result = await deleteUser({ userId: deleteTarget.userId });
 
-      if (result.type === 'success') {
-        setMessage({ 
-          type: 'success', 
-          text: `${deleteTarget.userName} a été supprimé avec succès` 
-        });
-        setTimeout(() => {
-          router.refresh();
-        }, 1000);
-      } else {
+        if (result.type === 'success') {
+          setMessage({ 
+            type: 'success', 
+            text: `${deleteTarget.userName} a été supprimé avec succès` 
+          });
+          setTimeout(() => {
+            router.refresh();
+          }, 1000);
+        } else {
+          setMessage({ 
+            type: 'error', 
+            text: result.message || 'Erreur lors de la suppression' 
+          });
+        }
+      } catch (error) {
+        console.error('Erreur suppression:', error);
         setMessage({ 
           type: 'error', 
-          text: result.message || 'Erreur lors de la suppression' 
+          text: 'Une erreur est survenue lors de la suppression' 
         });
+      } finally {
+        setShowDeleteConfirm(false);
+        setDeleteTarget(null);
       }
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Une erreur est survenue lors de la suppression' 
-      });
-    } finally {
-      setShowDeleteConfirm(false);
-      setDeleteTarget(null);
-    }
-  });
-};
+    });
+  };
+
   // Annuler la suppression
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
@@ -286,6 +301,19 @@ const confirmDelete = async () => {
   // Ouvrir le modal d'édition
   const handleEditUser = (actionnaire: Actionnaire) => {
     setEditingUser(actionnaire);
+    
+    // Gérer le cas où parrain est un objet ou une string
+    let parrainTelephone = '';
+    if (actionnaire.parrain) {
+      if (typeof actionnaire.parrain === 'string') {
+        // Si c'est une string (ObjectId), on ne peut pas récupérer le téléphone
+        parrainTelephone = '';
+      } else {
+        // Si c'est un objet populé
+        parrainTelephone = actionnaire.parrain.telephone || '';
+      }
+    }
+    
     setEditForm({
       firstName: actionnaire.firstName || '',
       lastName: actionnaire.lastName || '',
@@ -297,9 +325,12 @@ const confirmDelete = async () => {
       nationalite: actionnaire.nationalite || '',
       cni: actionnaire.cni || '',
       dateNaissance: actionnaire.dateNaissance || '',
-      actionsNumber:actionnaire.actionsNumber
+      actionsNumber: actionnaire.actionsNumber,
+      password: '',
+      parrain: parrainTelephone,
     });
     setEditErrors({});
+    setShowPassword(false);
     setShowEditModal(true);
   };
 
@@ -318,9 +349,12 @@ const confirmDelete = async () => {
       nationalite: '',
       cni: '',
       dateNaissance: '',
-      actionsNumber:0
+      actionsNumber: 0,
+      password: '',
+      parrain: '',
     });
     setEditErrors({});
+    setShowPassword(false);
   };
 
   // Gérer les changements dans le formulaire d'édition
@@ -362,6 +396,17 @@ const confirmDelete = async () => {
     if (editForm.dividende < 0) {
       errors.dividende = 'Le dividende ne peut pas être négatif';
     }
+    
+    // Validation du parrain
+    if (editForm.parrain && editForm.parrain.trim()) {
+      if (!/^[+]?[\d\s-()]+$/.test(editForm.parrain.trim())) {
+        errors.parrain = 'Format de téléphone invalide';
+      }
+      // Vérifier que l'utilisateur ne se parraine pas lui-même
+      if (editForm.parrain.trim() === editForm.telephone.trim()) {
+        errors.parrain = 'Un utilisateur ne peut pas être son propre parrain';
+      }
+    }
 
     setEditErrors(errors);
     return Object.keys(errors).length === 0;
@@ -390,8 +435,21 @@ const confirmDelete = async () => {
           nationalite: editForm.nationalite.trim() || undefined,
           cni: editForm.cni.trim() || undefined,
           dateNaissance: editForm.dateNaissance || undefined,
-          actionsNumber:editForm.actionsNumber,
+          actionsNumber: editForm.actionsNumber,
         };
+
+        // Ajouter le password s'il a été renseigné
+        if (editForm.password && editForm.password.trim()) {
+          dataToSend.password = editForm.password.trim();
+        }
+
+        // Ajouter le parrain s'il a été renseigné
+        if (editForm.parrain && editForm.parrain.trim()) {
+          dataToSend.parrain = editForm.parrain.trim();
+        } else if (editForm.parrain === '') {
+          // Si le champ est vide, envoyer null pour supprimer le parrain
+          dataToSend.parrain = '';
+        }
 
         // Vérifier si dividende a changé
         const dividendeChanged = editForm.dividende !== editingUser.dividende;
@@ -402,7 +460,6 @@ const confirmDelete = async () => {
         }
 
         const result = await updateUserInfo(dataToSend);
-//console.log(result);
 
         if (result.type === 'success') {
           setMessage({ type: 'success', text: result.message || 'Mise à jour réussie' });
@@ -624,27 +681,6 @@ const confirmDelete = async () => {
                 </button>
               )}
             </div>
-            
-           {/*  <div className="flex space-x-2">
-              {selectedUsers.length > 0 && (
-                <button
-                  onClick={handleDeleteMultipleUsers}
-                  disabled={isPending}
-                  className="flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer ({selectedUsers.length})
-                </button>
-              )}
-              <button
-                onClick={clearSelection}
-                disabled={isPending}
-                className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Annuler
-              </button>
-            </div> */}
           </div>
         </div>
       )}
@@ -768,401 +804,473 @@ const confirmDelete = async () => {
         selectedUsers={selectedUsers}
         onToggleUserSelection={toggleUserSelection}
       />
-{/* Modal de confirmation de suppression */}
-{showDeleteConfirm && deleteTarget && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg w-full max-w-md">
-      <div className="p-6">
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-full bg-red-100">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-          </div>
-          <h3 className="ml-3 text-lg font-bold text-gray-900">
-            Confirmer la suppression
-          </h3>
-        </div>
-        
-        <p className="text-gray-600 mb-6">
-          Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{deleteTarget.userName || 'cet utilisateur'}</span> ? Cette action est irréversible.
-        </p>
 
-        <div className="flex space-x-3">
-          <button
-            onClick={cancelDelete}
-            disabled={isPending}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={confirmDelete}
-            disabled={isPending}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isPending ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Suppression...
-              </>
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Supprimer
-              </>
-            )}
-          </button>
+      {/* Modal de confirmation de suppression */}
+      {showDeleteConfirm && deleteTarget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="p-3 rounded-full bg-red-100">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-bold text-gray-900">
+                  Confirmer la suppression
+                </h3>
+              </div>
+              
+              <p className="text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{deleteTarget.userName || 'cet utilisateur'}</span> ? Cette action est irréversible.
+              </p>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelDelete}
+                  disabled={isPending}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isPending}
+                  className="flex-1 flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Suppression...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Supprimer
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Modal d'édition - VERSION COMPLÈTE */}
-   {showEditModal && editingUser && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-      <div className="p-4 sm:p-6">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-            Modifier l'actionnaire
-          </h2>
-          <button 
-            onClick={closeEditModal}
-            disabled={isPending}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
-          >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Section: Informations Personnelles */}
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-              <User className="w-5 h-5 mr-2 text-blue-600" />
-              Informations Personnelles
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Prénom */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prénom <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={editForm.firstName}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      editErrors.firstName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Entrez le prénom"
-                  />
-                </div>
-                {editErrors.firstName && (
-                  <p className="text-red-500 text-xs mt-1">{editErrors.firstName}</p>
-                )}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  Modifier l'actionnaire
+                </h2>
+                <button 
+                  onClick={closeEditModal}
+                  disabled={isPending}
+                  className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
               </div>
 
-              {/* Nom */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={editForm.lastName}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      editErrors.lastName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Entrez le nom"
-                  />
-                </div>
-                {editErrors.lastName && (
-                  <p className="text-red-500 text-xs mt-1">{editErrors.lastName}</p>
-                )}
-              </div>
-
-              {/* Téléphone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="tel"
-                    name="telephone"
-                    value={editForm.telephone}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      editErrors.telephone ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="+221 77 123 45 67"
-                  />
-                </div>
-                {editErrors.telephone && (
-                  <p className="text-red-500 text-xs mt-1">{editErrors.telephone}</p>
-                )}
-              </div>
-
-              {/* Date de naissance */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de naissance
-                </label>
-                <div className="relative">
-                  <Cake className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="date"
-                    name="dateNaissance"
-                    value={editForm.dateNaissance}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Identité */}
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-              <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-              Identité
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* CNI */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CNI / Passeport
-                </label>
-                <div className="relative">
-                  <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="cni"
-                    value={editForm.cni}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="Numéro CNI/Passeport"
-                  />
-                </div>
-              </div>
-
-              {/* Nationalité */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nationalité
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="nationalite"
-                    value={editForm.nationalite}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="Ex: Sénégalaise"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Localisation */}
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-              <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-              Localisation
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              {/* Adresse */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adresse
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="adresse"
-                    value={editForm.adresse}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="Ex: Rue 10, Quartier Médina"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Ville */}
+              <div className="space-y-6">
+                {/* Section: Informations Personnelles */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ville
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      name="ville"
-                      value={editForm.ville}
-                      onChange={handleEditInputChange}
-                      disabled={isPending}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      placeholder="Ex: Dakar"
-                    />
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <User className="w-5 h-5 mr-2 text-blue-600" />
+                    Informations Personnelles
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Prénom */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Prénom <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={editForm.firstName}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.firstName ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Entrez le prénom"
+                        />
+                      </div>
+                      {editErrors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.firstName}</p>
+                      )}
+                    </div>
+
+                    {/* Nom */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nom <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={editForm.lastName}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.lastName ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Entrez le nom"
+                        />
+                      </div>
+                      {editErrors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.lastName}</p>
+                      )}
+                    </div>
+
+                    {/* Téléphone */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Téléphone <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="tel"
+                          name="telephone"
+                          value={editForm.telephone}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.telephone ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="+221 77 123 45 67"
+                        />
+                      </div>
+                      {editErrors.telephone && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.telephone}</p>
+                      )}
+                    </div>
+
+                    {/* Date de naissance */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date de naissance
+                      </label>
+                      <div className="relative">
+                        <Cake className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="date"
+                          name="dateNaissance"
+                          value={editForm.dateNaissance}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Pays */}
+                {/* Section: Parrainage */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Pays
-                  </label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      name="pays"
-                      value={editForm.pays}
-                      onChange={handleEditInputChange}
-                      disabled={isPending}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      placeholder="Ex: Sénégal"
-                    />
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <UserCog className="w-5 h-5 mr-2 text-blue-600" />
+                    Parrainage
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Téléphone du Parrain */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Téléphone du Parrain
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="tel"
+                          name="parrain"
+                          value={editForm.parrain}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.parrain ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="+221 77 123 45 67"
+                        />
+                      </div>
+                      {editErrors.parrain && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.parrain}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Entrez le numéro de téléphone du parrain (laisser vide pour aucun parrain)
+                      </p>
+                      {/* Afficher le parrain actuel si populé */}
+                      {editingUser.parrain && typeof editingUser.parrain !== 'string' && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Parrain actuel: {editingUser.parrain.firstName} {editingUser.parrain.lastName} ({editingUser.parrain.telephone})
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Identité */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
+                    Identité
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* CNI */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CNI / Passeport
+                      </label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="cni"
+                          value={editForm.cni}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Numéro CNI/Passeport"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nationalité */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nationalité
+                      </label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="nationalite"
+                          value={editForm.nationalite}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Ex: Sénégalaise"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Localisation */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                    Localisation
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Adresse */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Adresse
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          name="adresse"
+                          value={editForm.adresse}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Ex: Rue 10, Quartier Médina"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Ville */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ville
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            name="ville"
+                            value={editForm.ville}
+                            onChange={handleEditInputChange}
+                            disabled={isPending}
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder="Ex: Dakar"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Pays */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Pays
+                        </label>
+                        <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            name="pays"
+                            value={editForm.pays}
+                            onChange={handleEditInputChange}
+                            disabled={isPending}
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder="Ex: Sénégal"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Finances */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
+                    Finances
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Dividende */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dividende (XOF)
+                      </label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="number"
+                          name="dividende"
+                          value={editForm.dividende}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          min="0"
+                          step="0.01"
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.dividende ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="0"
+                        />
+                      </div>
+                      {editErrors.dividende && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.dividende}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Informations du compte */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <Settings className="w-5 h-5 mr-2 text-blue-600" />
+                    Informations du compte
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Nombre d'actions */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre d'actions <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <TrendingUp className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="number"
+                          name="actionsNumber"
+                          value={editForm.actionsNumber}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          min="0"
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                            editErrors.actionsNumber ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="0"
+                        />
+                      </div>
+                      {editErrors.actionsNumber && (
+                        <p className="text-red-500 text-xs mt-1">{editErrors.actionsNumber}</p>
+                      )}
+                    </div>
+
+                    {/* Nouveau mot de passe avec toggle */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nouveau mot de passe
+                      </label>
+                      <div className="relative">
+                        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={editForm.password}
+                          onChange={handleEditInputChange}
+                          disabled={isPending}
+                          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          placeholder="Laisser vide pour ne pas modifier"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          disabled={isPending}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Le mot de passe sera envoyé par WhatsApp si modifié
+                      </p>
+                    </div>
+
+                    {/* Date de création */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date de création
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          value={formatDate(editingUser.createdAt)}
+                          disabled
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Ce champ ne peut pas être modifié</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Section: Finances */}
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-              <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
-              Finances
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Dividende */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dividende (XOF)
-                </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="number"
-                    name="dividende"
-                    value={editForm.dividende}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    min="0"
-                    step="0.01"
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      editErrors.dividende ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="0"
-                  />
-                </div>
-                {editErrors.dividende && (
-                  <p className="text-red-500 text-xs mt-1">{editErrors.dividende}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Informations du compte - MAINTENANT MODIFIABLE */}
-          <div>
-            <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-              <Settings className="w-5 h-5 mr-2 text-blue-600" />
-              Informations du compte
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Email */}
-            
-
-              {/* Nombre d'actions */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre d'actions <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <TrendingUp className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="number"
-                    name="actionsNumber"
-                    value={editForm.actionsNumber}
-                    onChange={handleEditInputChange}
-                    disabled={isPending}
-                    min="0"
-                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      editErrors.actionsNumber ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="0"
-                  />
-                </div>
-                {editErrors.actionsNumber && (
-                  <p className="text-red-500 text-xs mt-1">{editErrors.actionsNumber}</p>
-                )}
-              </div>
-
-          
-
-              {/* Date de création - Lecture seule mais visible */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de création
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    value={formatDate(editingUser.createdAt)}
-                    disabled
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Ce champ ne peut pas être modifié</p>
+              <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={closeEditModal}
+                  disabled={isPending}
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveUser}
+                  disabled={isPending}
+                  className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isPending ? 'Sauvegarde...' : 'Sauvegarder'}
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6 pt-6 border-t border-gray-200">
-          <button
-            onClick={closeEditModal}
-            disabled={isPending}
-            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSaveUser}
-            disabled={isPending}
-            className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isPending ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Résumé en bas */}
       <div className="mt-4 sm:mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
@@ -1238,16 +1346,6 @@ const confirmDelete = async () => {
                 <FileText className="w-4 h-4 mr-2" />
                 Générer rapport PDF (bientôt)
               </button>
-              {isSelectionMode && selectedUsers.length > 0 && (
-                <button 
-                  className="w-full flex items-center justify-start px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-                  onClick={handleDeleteMultipleUsers}
-                  disabled={isPending}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer la sélection ({selectedUsers.length})
-                </button>
-              )}
             </div>
           </div>
         </div>

@@ -33,7 +33,13 @@ const LoginForm = () => {
   const handleLogin = async (formData: FormData) => {
     try {
       const result = await login(null, formData);
-      
+
+      // Si connexion réussie sans OTP, rediriger immédiatement
+      if (result.type === "redirect" && result.url) {
+        router.push(result.url);
+        return;
+      }
+
       setState({
         requiresOtp: result.requiresOtp || false,
         telephone: result.telephone || telephone,

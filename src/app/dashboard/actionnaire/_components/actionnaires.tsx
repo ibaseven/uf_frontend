@@ -6,6 +6,7 @@ import PurchaseMethodSelector from './PurchaseMethodSelector';
 import ActionsSaleModal from './ActionsSaleModal';
 import { ActionsData, UserInfo } from '@/app/Schema/ActionnaireModel';
 import { formatAmount } from '../../../../lib/projectionUtils';
+import Link from 'next/link';
 
 interface ActionnaireUserViewProps {
   user: UserInfo;
@@ -61,7 +62,18 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
             <p className="text-sm text-gray-600">Nom complet</p>
             <p className="font-semibold">{user.firstName} {user.lastName}</p>
           </div>
-        
+        <div>
+  <p className="text-sm text-gray-600">Groupe WhatsApp</p>
+  <a
+    href="https://chat.whatsapp.com/LJ5ao94sDYPDyYzVsqU49r"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="font-semibold text-blue-600 underline"
+  >
+    Rejoindre le groupe WhatsApp
+  </a>
+</div>
+
           <div>
             <p className="text-sm text-gray-600">Téléphone</p>
             <p className="font-semibold">{user.telephone}</p>
