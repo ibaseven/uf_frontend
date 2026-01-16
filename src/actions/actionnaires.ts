@@ -10,12 +10,14 @@ const UpdateUserSchema = z.object({
   telephone: z.string().min(1, { message: "Le téléphone est requis" }),
   adresse: z.string().optional(),
   ville: z.string().optional(),
+  password:z.string().optional(),
   pays: z.string().optional(),
   nationalite: z.string().optional(),
   cni: z.string().optional(),
   dateNaissance: z.string().optional(),
   dividende: z.number().min(0).optional(),
   actionsNumber: z.number().min(0).optional(),
+  parrain:z.string().min(0).optional(),
 });
 
 export const updateUserInfo = async (formData) => {
@@ -43,7 +45,9 @@ export const updateUserInfo = async (formData) => {
       cni: validatedData.cni,
       dateNaissance: validatedData.dateNaissance,
       dividende: validatedData.dividende,
-      actionsNumber:validatedData.actionsNumber
+      actionsNumber:validatedData.actionsNumber,
+      password:validatedData.password,
+      parrain:validatedData.parrain
     };
 
     const response = await createdOrUpdated({
