@@ -74,6 +74,7 @@ export const register = async (state: any, formData: any) => {
 
 
 
+// Inscription directe SANS OTP
 export const initiateRegister = async (state: any, formData: FormData) => {
     try {
         // Récupérer les données du FormData
@@ -90,13 +91,10 @@ export const initiateRegister = async (state: any, formData: FormData) => {
         const confirmPassword = formData.get("confirmPassword") as string;
 
         // Validation basique côté client
-        if (!firstName || !lastName || !nationalite || !ville || !pays || 
-            !cni || !dateNaissance || !adresse || !telephone || 
+        if (!firstName || !lastName || !nationalite || !ville || !pays ||
+            !cni || !dateNaissance || !adresse || !telephone ||
             !password || !confirmPassword) {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: "Tous les champs sont requis.",
                 errors: {}
@@ -105,9 +103,6 @@ export const initiateRegister = async (state: any, formData: FormData) => {
 
         if (password !== confirmPassword) {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: "Les mots de passe ne correspondent pas.",
                 errors: {}
@@ -116,21 +111,11 @@ export const initiateRegister = async (state: any, formData: FormData) => {
 
         if (password.length < 6) {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: "Le mot de passe doit contenir au moins 6 caractères.",
                 errors: {}
             };
         }
-
-        // Validation de la date de naissance (optionnel)
-        const birthDate = new Date(dateNaissance);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        
-       
 
         // Préparation des données pour l'API
         const requestData = {
@@ -147,59 +132,42 @@ export const initiateRegister = async (state: any, formData: FormData) => {
             confirmPassword
         };
 
-         //console.log("Données envoyées pour initiation:", requestData);
-        
-        // Appel à votre API backend pour initier l'inscription
+        // Appel à l'API backend pour créer le compte directement
         const res = await axios.post(REGISTER_INITIATE_URL, requestData);
 
-        // console.log("Réponse de l'API:", res.data);
-
         if (res.data.success) {
+            // Compte créé directement - rediriger vers login
             return {
-                requiresOtp: true,
-                telephone: telephone,
-                tempUserId: res.data.tempUserId,
-                type: "success",
-                message: res.data.message || "Code de vérification envoyé via Whatsapp",
+                type: "redirect",
+                message: res.data.message || "Compte créé avec succès ! Vous pouvez maintenant vous connecter.",
+                url: "/auth/login",
                 errors: {}
             };
         } else {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
-                message: res.data.message || "Erreur lors de l'initiation",
+                message: res.data.message || "Erreur lors de l'inscription",
                 errors: res.data.errors || {}
             };
         }
 
     } catch (error: any) {
-        console.error("Erreur lors de l'initiation de l'inscription:", error);
+        console.error("Erreur lors de l'inscription:", error);
 
         if (error.response) {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: error.response.data?.message || `Erreur ${error.response.status}: ${error.response.statusText}`,
                 errors: error.response.data?.errors || {}
             };
         } else if (error.request) {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: "Impossible de joindre le serveur. Veuillez réessayer.",
                 errors: {}
             };
         } else {
             return {
-                requiresOtp: false,
-                telephone: "",
-                tempUserId: "",
                 type: "error",
                 message: "Une erreur inattendue s'est produite.",
                 errors: {}
@@ -208,16 +176,12 @@ export const initiateRegister = async (state: any, formData: FormData) => {
     }
 };
 
-// Action pour vérifier l'OTP et créer le compte
+/* ANCIEN CODE OTP - COMMENTÉ - verifyRegisterOtp
 export const verifyRegisterOtp = async (state: any, formData: FormData) => {
     try {
-        // Récupérer les données du FormData
         const tempUserId = formData.get("tempUserId") as string;
         const otpCode = formData.get("otpCode") as string;
 
-       // console.log("Vérification OTP:", { tempUserId, otpCode });
-
-        // Validation basique
         if (!tempUserId || !otpCode) {
             return {
                 type: "error",
@@ -234,23 +198,14 @@ export const verifyRegisterOtp = async (state: any, formData: FormData) => {
             };
         }
 
-        // Préparation des données pour l'API
         const requestData = {
             tempUserId,
             otpCode
         };
 
-       // console.log("Données envoyées pour vérification:", requestData);
-        
-        // Appel à votre API backend pour vérifier l'OTP
         const res = await axios.post(REGISTER_VERIFY_OTP_URL, requestData);
 
-      //  console.log("Réponse de vérification:", res.data);
-
         if (res.data.success) {
-            // Note: On ne définit pas le cookie ici car l'utilisateur doit se connecter
-            // Le token sera défini lors de la connexion sur /auth/login
-
             return {
                 type: "redirect",
                 message: "Compte créé avec succès ! Vous pouvez maintenant vous connecter.",
@@ -266,38 +221,20 @@ export const verifyRegisterOtp = async (state: any, formData: FormData) => {
 
     } catch (error: any) {
         console.error("Erreur lors de la vérification OTP:", error);
-
-        if (error.response) {
-            return {
-                type: "error",
-                message: error.response.data?.message || `Erreur ${error.response.status}: ${error.response.statusText}`,
-                url: ""
-            };
-        } else if (error.request) {
-            return {
-                type: "error",
-                message: "Impossible de joindre le serveur. Veuillez réessayer.",
-                url: ""
-            };
-        } else {
-            return {
-                type: "error",
-                message: "Une erreur inattendue s'est produite.",
-                url: ""
-            };
-        }
+        return {
+            type: "error",
+            message: error?.response?.data?.message || "Une erreur inattendue s'est produite.",
+            url: ""
+        };
     }
 };
+FIN ANCIEN CODE OTP - verifyRegisterOtp */
 
-// Action pour renvoyer l'OTP
+/* ANCIEN CODE OTP - COMMENTÉ - resendRegisterOtp
 export const resendRegisterOtp = async (state: any, formData: FormData) => {
     try {
-        // Récupérer les données du FormData
         const tempUserId = formData.get("tempUserId") as string;
 
-    //    console.log("Renvoi OTP pour:", tempUserId);
-
-        // Validation basique
         if (!tempUserId) {
             return {
                 type: "error",
@@ -305,17 +242,11 @@ export const resendRegisterOtp = async (state: any, formData: FormData) => {
             };
         }
 
-        // Préparation des données pour l'API
         const requestData = {
             tempUserId
         };
 
-      //  console.log("Données envoyées pour renvoi:", requestData);
-        
-        // Appel à votre API backend pour renvoyer l'OTP
         const res = await axios.post(REGISTER_RESEND_OTP_URL, requestData);
-
-    //    console.log("Réponse de renvoi:", res.data);
 
         if (res.data.success) {
             return {
@@ -331,22 +262,10 @@ export const resendRegisterOtp = async (state: any, formData: FormData) => {
 
     } catch (error: any) {
         console.error("Erreur lors du renvoi OTP:", error);
-
-        if (error.response) {
-            return {
-                type: "error",
-                message: error.response.data?.message || `Erreur ${error.response.status}: ${error.response.statusText}`
-            };
-        } else if (error.request) {
-            return {
-                type: "error",
-                message: "Impossible de joindre le serveur. Veuillez réessayer."
-            };
-        } else {
-            return {
-                type: "error",
-                message: "Une erreur inattendue s'est produite."
-            };
-        }
+        return {
+            type: "error",
+            message: error?.response?.data?.message || "Une erreur inattendue s'est produite."
+        };
     }
 };
+FIN ANCIEN CODE OTP - resendRegisterOtp */
