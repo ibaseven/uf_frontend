@@ -8,7 +8,7 @@ import axios from "axios";
 
 
 
-// Action pour demander un OTP de réinitialisation
+// Vérification du téléphone pour réinitialisation SANS OTP
 export const requestPasswordReset = async (state: any, formData: FormData) => {
   try {
     // Validation avec zod
@@ -17,7 +17,7 @@ export const requestPasswordReset = async (state: any, formData: FormData) => {
     });
 
     if (!validatedFields.success) {
-      return { 
+      return {
         errors: validatedFields.error.flatten().fieldErrors,
         type: "error"
       };
@@ -25,25 +25,24 @@ export const requestPasswordReset = async (state: any, formData: FormData) => {
 
     const { telephone } = validatedFields.data;
 
-    // Faire une  POST pour demander l'OTP de réinitialisation
+    // Vérifier si l'utilisateur existe
     const res = await axios.post(REQUEST_PASSWORD_RESET_URL, {
       telephone,
     });
 
-
     if (res.data.success) {
+      // Passer directement à l'étape de changement de mot de passe (sans OTP)
       return {
-        requiresOtp: true,
+        canResetPassword: true,
         telephone: telephone,
         userId: res.data.userId,
         type: "success",
-        message: "Un code de réinitialisation a été envoyé à votre numéro Whatsapp",
-        expiresIn: res.data.expiresIn || "10 minutes"
+        message: "Utilisateur trouvé. Vous pouvez réinitialiser votre mot de passe."
       };
     } else {
       return {
         type: "error",
-        message: res.data.message || "Échec de l'envoi du code de réinitialisation",
+        message: res.data.message || "Utilisateur non trouvé",
       };
     }
   } catch (error: any) {
@@ -55,25 +54,29 @@ export const requestPasswordReset = async (state: any, formData: FormData) => {
   }
 };
 
-// Action pour vérifier l'OTP et réinitialiser le mot de passe
+// Réinitialisation du mot de passe SANS OTP
 export const verifyResetOTP = async (state: any, formData: FormData) => {
   try {
-    // Validation avec zod
-    const validatedFields = VerifyResetOTPSchema.safeParse({
-      userId: formData.get("userId"),
-      otpCode: formData.get("otpCode"),
-      newPassword: formData.get("newPassword"),
-      confirmPassword: formData.get("confirmPassword"),
-    });
+    const userId = formData.get("userId") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (!validatedFields.success) {
-      return { 
-        errors: validatedFields.error.flatten().fieldErrors,
-        type: "error"
+    // Validation
+    if (!userId || !newPassword || !confirmPassword) {
+      return {
+        type: "error",
+        message: "Tous les champs sont requis",
+        errors: {}
       };
     }
 
-    const { userId, otpCode, newPassword, confirmPassword } = validatedFields.data;
+    if (newPassword.length < 6) {
+      return {
+        type: "error",
+        message: "Le mot de passe doit contenir au moins 6 caractères",
+        errors: {}
+      };
+    }
 
     // Vérifier que les mots de passe correspondent
     if (newPassword !== confirmPassword) {
@@ -86,14 +89,11 @@ export const verifyResetOTP = async (state: any, formData: FormData) => {
       };
     }
 
-    // Envoyer une requête pour vérifier l'OTP et réinitialiser le mot de passe
+    // Envoyer une requête pour réinitialiser le mot de passe (sans OTP)
     const res = await axios.post(VERIFY_RESET_OTP_URL, {
       userId,
-      otpCode,
       newPassword,
     });
-
-  
 
     if (res.data.success) {
       return {
@@ -108,21 +108,20 @@ export const verifyResetOTP = async (state: any, formData: FormData) => {
       };
     }
   } catch (error: any) {
-    console.error("Reset password verification error:", error);
+    console.error("Reset password error:", error);
     return {
       type: "error",
-      message: error?.response?.data?.message || "Erreur lors de la vérification du code OTP",
+      message: error?.response?.data?.message || "Erreur lors de la réinitialisation du mot de passe",
     };
   }
 };
 
-// Action pour renvoyer un OTP de réinitialisation
+/* ANCIEN CODE OTP - COMMENTÉ - resendResetOTP
 export const resendResetOTP = async (userId: string) => {
   try {
     const res = await axios.post(RESEND_RESET_OTP_URL, {
       userId,
     });
-
 
     if (res.data.success) {
       return {
@@ -143,3 +142,4 @@ export const resendResetOTP = async (userId: string) => {
     };
   }
 };
+FIN ANCIEN CODE OTP - resendResetOTP */
