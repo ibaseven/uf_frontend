@@ -82,42 +82,39 @@ const BuyActionsView: React.FC<BuyActionsViewProps> = ({ pricePerAction }) => {
     setError(null);
   };
 
- const handleBuyActions = async () => {
-  if (actionNumber < MIN_ACTIONS || actionNumber % STEP !== 0) {
-    setError(`Le nombre d'actions doit être un multiple de ${STEP} (minimum ${MIN_ACTIONS})`);
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-  setSuccess(null);
-
-  try {
-    const result = await buyActions({
-      actionNumber,
-      parrainPhone: parrainPhone.trim() || undefined
-    });
-
-    if (result.type === 'success') {
-      setSuccess('Achat initié avec succès !');
-
-      if (result.invoice?.response_text) {
-        // 🚀 Ouvre directement la page de paiement
-        window.open(result.invoice.response_text, "_blank"); 
-      } else {
-        window.location.reload();
-      }
-    } else {
-      setError(result.message || "Erreur lors de l'achat");
+  const handleBuyActions = async () => {
+    if (actionNumber < MIN_ACTIONS || actionNumber % STEP !== 0) {
+      setError(`Le nombre d'actions doit être un multiple de ${STEP} (minimum ${MIN_ACTIONS})`);
+      return;
     }
-  } catch (err) {
-    console.error('Erreur:', err);
-    setError("Une erreur est survenue lors de l'achat");
-  } finally {
-    setLoading(false);
-  }
-};
 
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const result = await buyActions({
+        actionNumber,
+        parrainPhone: parrainPhone.trim() || undefined
+      });
+
+      if (result.type === 'success') {
+        setSuccess('Achat initié avec succès !');
+        
+        if (result.invoice?.response_text) {
+          // Rediriger vers la page de paiement dans le même onglet
+          window.location.href = result.invoice.response_text;
+        }
+      } else {
+        setError(result.message || "Erreur lors de l'achat");
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+      setError("Une erreur est survenue lors de l'achat");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const closeModal = () => {
     setShowBuyModal(false);
