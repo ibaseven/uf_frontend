@@ -1,123 +1,72 @@
-"use server";
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+"use server"
 import axios from "axios";
 import { cookies } from "next/headers";
 
-export async function fetchJSON(url: string) {
-  const token = (await cookies()).get("token")?.value;
+// Fonction helper pour obtenir le token et configurer les headers
+const getAuthHeaders = async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
 
-  try {
-    // Construire les headers de manière conditionnelle pour éviter l'erreur TypeScript
-    const headers: HeadersInit = {
-      Accept: "application/json",
+  if (token) {
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     };
-
-    // Ajouter Authorization seulement si le token existe
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const res = await fetch(`${url}`, {
-      headers,
-    });
-
-    if (res.ok) {
-      return await res.json();
-    }
-    return [];
-  } catch (error) {
-    console.error("Erreur dans fetchJSON:", error);
-    return [];
   }
-}
 
-export async function createdOrUpdated({
-    url,
-    data,
-    updated = false
-}: { 
-    url: string;
-    data: any;
-    updated?: boolean;
-}) {
-    const token = (await cookies()).get("token")?.value;
+  return {
+    "Content-Type": "application/json",
+  };
+};
 
-    if (!token) {
-        console.error("🚨 Token manquant !");
-        throw new Error("Token manquant");
-    }
+// Fonction pour faire des requêtes GET avec authentification
+export const fetchJSON = async (url: string) => {
+  try {
+    const headers = await getAuthHeaders();
 
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-    };
+    const response = await axios.get(url, { headers });
 
-    let res;
-    try {
-        if (!updated) {
-            res = await axios.post(url, data, { headers });
-        } else {
-            res = await axios.put(url, data, { headers });
-        }
+    return response.data;
+  } catch (error: any) {
+    console.error("Erreur fetchJSON:", error?.response?.data || error.message);
+    throw error;
+  }
+};
 
-        return res.data;
-    } catch (error: any) {
-        console.error("💥 Erreur API :", error.response?.data || error.message);
-        throw error;
-    }
-}
-export async function deleteWithAxios({
-    url,
-    data = null
-}: { 
-    url: string;
-    data?: any;
-}) {
-    const token = (await cookies()).get("token")?.value;
+// Fonction pour créer ou mettre à jour des données
+export const createdOrUpdated = async ({
+  url,
+  data,
+  updated = false,
+}: {
+  url: string;
+  data: any;
+  updated?: boolean;
+}) => {
+  try {
+    const headers = await getAuthHeaders();
 
-    // 🔍 DEBUG: Vérification du token
-    //console.log("🔐 Token récupéré pour suppression:", token ? "✅ Présent" : "❌ Manquant");
-    //console.log("🌐 URL de suppression:", url);
-    //console.log("📦 Data de suppression:", data);
+    const response = updated
+      ? await axios.put(url, data, { headers })
+      : await axios.post(url, data, { headers });
 
-    if (!token) {
-        console.error("🚨 Token manquant pour la suppression !");
-        throw new Error("Token manquant - Veuillez vous reconnecter");
-    }
+    return response.data;
+  } catch (error: any) {
+    console.error("Erreur createdOrUpdated:", error?.response?.data || error.message);
+    throw error;
+  }
+};
 
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-    };
+// Fonction pour supprimer des données
+export const deleteWithAxios = async ({ url }: { url: string }) => {
+  try {
+    const headers = await getAuthHeaders();
 
-  /*   console.log("📋 Headers pour suppression:", {
-        ...headers,
-        Authorization: headers.Authorization.substring(0, 20) + "..." // Masquer le token complet
-    }); */
+    const response = await axios.delete(url, { headers });
 
-    try {
-        let res;
-        if (data) {
-            // Pour les suppressions avec body (suppression multiple)
-            //console.log("🔄 Suppression multiple avec data");
-            res = await axios.delete(url, { headers, data });
-        } else {
-            // Pour les suppressions simples avec URL params
-            //("🔄 Suppression simple sans data");
-            res = await axios.delete(url, { headers });
-        }
-
-        //console.log("✅ Suppression réussie:", res.status, res.statusText);
-        return res.data;
-    } catch (error: any) {
-        console.error("💥 Erreur API Delete détaillée:", {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message,
-            url: url
-        });
-        throw error;
-    }
-}
+    return response.data;
+  } catch (error: any) {
+    console.error("Erreur deleteWithAxios:", error?.response?.data || error.message);
+    throw error;
+  }
+};

@@ -12,6 +12,7 @@ const AddProjectSchema = z.object({
   monthlyPayment: z.number().optional(),
   description: z.string().optional(),
   gainProject: z.number().optional(),
+  isVisible: z.boolean().optional(),
 });
 
 // 🔥 NOUVELLE ACTION : Ajouter un projet avec upload de fichier
