@@ -3,12 +3,13 @@
 
 import { z } from 'zod';
 import { createdOrUpdated, fetchJSON } from '@/lib/api';
-import { 
+import {
   BUY_ACTIONS_URL,
   DEDUCT_FEES_URL,
-  GET_MY_ACTIONS_PURCHASES_URL, 
-  UPDATE_ACTION_PRICE_URL, 
-  UPDATE_PROFILE_URL
+  GET_MY_ACTIONS_PURCHASES_URL,
+  UPDATE_ACTION_PRICE_URL,
+  UPDATE_PROFILE_URL,
+  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL
 } from '@/lib/endpoint';
 
 const BuyActionsSchema = z.object({
@@ -276,6 +277,72 @@ export const deductFees = async (formData: {
     return {
       type: "error",
       message: "Erreur lors de la déduction des frais"
+    };
+  }
+};
+
+// Schema pour l'achat d'actions avec dividendes (minimum 5, multiple de 5)
+const BuyActionsWithDividendsSchema = z.object({
+  actionNumber: z.number()
+    .min(5, { message: "Le nombre d'actions doit être au moins 5" })
+    .refine(val => val % 5 === 0, { message: "Le nombre d'actions doit être un multiple de 5" })
+});
+
+export const purchaseActionsWithDividends = async (formData: {
+  nombre_actions: number;
+}) => {
+  try {
+    // Validation des données
+    const validation = BuyActionsWithDividendsSchema.safeParse({
+      actionNumber: formData.nombre_actions
+    });
+
+    if (!validation.success) {
+      return {
+        type: "error" as const,
+        errors: validation.error.flatten().fieldErrors,
+        message: "Données invalides"
+      };
+    }
+
+    // Appel à l'API d'achat avec dividendes
+    const response = await createdOrUpdated({
+      url: PURCHASE_ACTIONS_WITH_DIVIDENDS_URL,
+      data: { actionNumber: formData.nombre_actions }
+    });
+
+    if (response.message === "Achat d'actions avec dividendes effectué avec succès !") {
+      return {
+        type: "success" as const,
+        message: response.message,
+        data: {
+          action: response.data?.action,
+          transaction: response.data?.transaction,
+          newDividendBalance: response.data?.newDividendBalance,
+          newActionsNumber: response.data?.newActionsNumber,
+          totalPaid: response.data?.totalPaid
+        }
+      };
+    } else {
+      return {
+        type: "error" as const,
+        message: response.message || "Erreur lors de l'achat"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans purchaseActionsWithDividends:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error" as const,
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error" as const,
+      message: "Erreur lors de l'achat d'actions avec dividendes"
     };
   }
 };
