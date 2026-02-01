@@ -30,7 +30,8 @@ const UpdateProjectSchema = z.object({
   duration: z.number().positive("La durée doit être positive"),
   monthlyPayment: z.number().optional(),
   description: z.string().optional(),
-  gainProject: z.number().optional()
+  gainProject: z.number().optional(),
+  isVisible: z.boolean().optional()
 });
 // Action : Payer une participation à un projet
 export const payProjectParticipation = async (formData: { projectIds: string[], amount: number }) => {
@@ -279,6 +280,7 @@ export const updateProject = async (projectId: string, formData: {
   monthlyPayment?: number;
   description?: string;
   gainProject?: number;
+  isVisible?: boolean;
 }) => {
   try {
     const validation = UpdateProjectSchema.safeParse(formData);

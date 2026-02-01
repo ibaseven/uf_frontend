@@ -6,6 +6,7 @@ import {
   DollarSign,
   Clock,
   Eye,
+  EyeOff,
   Edit,
   Trash2,
   Download,
@@ -59,6 +60,7 @@ interface Project {
   gainProject?: number;
   rapport?: string;
   rapportUrl?: string;
+  isVisible?: boolean;
   createdAt: string;
   updatedAt: string;
   participants?: Participant[];
@@ -123,13 +125,15 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
     return new Promise((resolve) => {
       startTransition(async () => {
         try {
+          const isVisibleValue = formData.get('isVisible');
           const data = {
             nameProject: formData.get('nameProject') as string,
             packPrice: Number(formData.get('packPrice')),
             duration: Number(formData.get('duration')),
             monthlyPayment: formData.get('monthlyPayment') ? Number(formData.get('monthlyPayment')) : undefined,
             description: formData.get('description') as string || undefined,
-            gainProject: formData.get('gainProject') ? Number(formData.get('gainProject')) : undefined
+            gainProject: formData.get('gainProject') ? Number(formData.get('gainProject')) : undefined,
+            isVisible: isVisibleValue === 'true'
           };
 
           const result = await updateProject(projectId, data);
@@ -323,8 +327,16 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {project.nameProject}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {project.nameProject}
+                          </span>
+                          {project.isVisible === false && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600" title="Non visible pour tous">
+                              <EyeOff className="w-3 h-3 mr-1" />
+                              Privé
+                            </span>
+                          )}
                         </div>
                         {project.description && (
                           <div className="text-xs text-gray-500 truncate max-w-xs">
@@ -450,7 +462,15 @@ const ProjectsList: React.FC<ProjectsListProps> = ({ projects }) => {
           <div key={project._id} className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{project.nameProject}</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-gray-900">{project.nameProject}</h3>
+                  {project.isVisible === false && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                      <EyeOff className="w-3 h-3 mr-1" />
+                      Privé
+                    </span>
+                  )}
+                </div>
                 {project.description && (
                   <p className="text-xs text-gray-500 mt-1">{project.description}</p>
                 )}

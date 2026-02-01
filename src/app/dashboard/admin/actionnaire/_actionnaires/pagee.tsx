@@ -34,17 +34,27 @@ import {
   MessageCircle,
   UserCog,
   EyeOff,
-  Eye
+  Eye,
+  FolderPlus,
+  Folder,
+  Plus,
+  Minus
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import ActionnairesList from './ActionnairesList';
-import { updateUserInfo, deleteUser, calculateDividende, createUserWithRandomPassword } from '@/actions/actionnaires';
+import { updateUserInfo, deleteUser, calculateDividende, createUserWithRandomPassword, assignProjectToUser, unassignProjectFromUser } from '@/actions/actionnaires';
 import CalculateDividendeModal from './CalculateDividendeModal';
 import CreateUserModal from './CreateUserModal';
 import SendWhatsAppInvitationsModal from './SendWhatsAppInvitationsModal';
 
 // Types
+interface Project {
+  _id: string;
+  nameProject: string;
+  isVisible?: boolean;
+}
+
 interface Actionnaire {
   _id: string;
   firstName: string;
@@ -69,6 +79,7 @@ interface Actionnaire {
     lastName: string;
     telephone: string;
   } | string;
+  assignedProjects?: string[] | Project[];
 }
 
 interface Statistiques {
@@ -82,6 +93,7 @@ interface Statistiques {
 interface ActionnairesAdminViewProps {
   actionnaires: Actionnaire[];
   statistiques: Statistiques;
+  allProjects?: Project[];
 }
 
 interface EditForm {
@@ -105,9 +117,10 @@ interface Message {
   text: string;
 }
 
-const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({ 
-  actionnaires, 
-  statistiques
+const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
+  actionnaires,
+  statistiques,
+  allProjects = []
 }) => {
   const router = useRouter();
   
@@ -142,6 +155,8 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   const [showCalculateModal, setShowCalculateModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showWhatsAppInvitationsModal, setShowWhatsAppInvitationsModal] = useState(false);
+  const [userAssignedProjects, setUserAssignedProjects] = useState<string[]>([]);
+  const [selectedProjectToAssign, setSelectedProjectToAssign] = useState<string>('');
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -301,7 +316,7 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
   // Ouvrir le modal d'édition
   const handleEditUser = (actionnaire: Actionnaire) => {
     setEditingUser(actionnaire);
-    
+
     // Gérer le cas où parrain est un objet ou une string
     let parrainTelephone = '';
     if (actionnaire.parrain) {
@@ -313,7 +328,14 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
         parrainTelephone = actionnaire.parrain.telephone || '';
       }
     }
-    
+
+    // Charger les projets assignés
+    const assignedIds = actionnaire.assignedProjects
+      ? actionnaire.assignedProjects.map((p: any) => typeof p === 'string' ? p : p._id)
+      : [];
+    setUserAssignedProjects(assignedIds);
+    setSelectedProjectToAssign('');
+
     setEditForm({
       firstName: actionnaire.firstName || '',
       lastName: actionnaire.lastName || '',
@@ -355,6 +377,68 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
     });
     setEditErrors({});
     setShowPassword(false);
+    setUserAssignedProjects([]);
+    setSelectedProjectToAssign('');
+  };
+
+  // Assigner un projet à l'utilisateur
+  const handleAssignProject = async () => {
+    if (!editingUser || !selectedProjectToAssign) return;
+
+    startTransition(async () => {
+      try {
+        const result = await assignProjectToUser({
+          projectId: selectedProjectToAssign,
+          userId: editingUser._id
+        });
+
+        if (result.type === 'success') {
+          setUserAssignedProjects(prev => [...prev, selectedProjectToAssign]);
+          setSelectedProjectToAssign('');
+          setMessage({ type: 'success', text: result.message || 'Projet assigné avec succès' });
+        } else {
+          setMessage({ type: 'error', text: result.message || 'Erreur lors de l\'assignation' });
+        }
+      } catch (error) {
+        console.error('Erreur assignation projet:', error);
+        setMessage({ type: 'error', text: 'Erreur lors de l\'assignation du projet' });
+      }
+    });
+  };
+
+  // Désassigner un projet de l'utilisateur
+  const handleUnassignProject = async (projectId: string) => {
+    if (!editingUser) return;
+
+    startTransition(async () => {
+      try {
+        const result = await unassignProjectFromUser({
+          projectId: projectId,
+          userId: editingUser._id
+        });
+
+        if (result.type === 'success') {
+          setUserAssignedProjects(prev => prev.filter(id => id !== projectId));
+          setMessage({ type: 'success', text: result.message || 'Projet retiré avec succès' });
+        } else {
+          setMessage({ type: 'error', text: result.message || 'Erreur lors du retrait' });
+        }
+      } catch (error) {
+        console.error('Erreur désassignation projet:', error);
+        setMessage({ type: 'error', text: 'Erreur lors du retrait du projet' });
+      }
+    });
+  };
+
+  // Obtenir les projets non encore assignés à l'utilisateur
+  const getAvailableProjectsForAssignment = () => {
+    return allProjects.filter(project => !userAssignedProjects.includes(project._id));
+  };
+
+  // Obtenir le nom d'un projet par son ID
+  const getProjectNameById = (projectId: string) => {
+    const project = allProjects.find(p => p._id === projectId);
+    return project ? project.nameProject : 'Projet inconnu';
   };
 
   // Gérer les changements dans le formulaire d'édition
@@ -1012,6 +1096,77 @@ const ActionnairesAdminView: React.FC<ActionnairesAdminViewProps> = ({
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Section: Projets Assignés */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                    <FolderPlus className="w-5 h-5 mr-2 text-blue-600" />
+                    Projets Assignés
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Les projets assignés seront visibles par cet actionnaire même s'ils ne sont pas publics
+                  </p>
+
+                  {/* Liste des projets assignés */}
+                  {userAssignedProjects.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      {userAssignedProjects.map((projectId) => (
+                        <div
+                          key={projectId}
+                          className="flex items-center justify-between p-2 bg-blue-50 rounded-lg"
+                        >
+                          <div className="flex items-center">
+                            <Folder className="w-4 h-4 text-blue-600 mr-2" />
+                            <span className="text-sm text-gray-700">{getProjectNameById(projectId)}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleUnassignProject(projectId)}
+                            disabled={isPending}
+                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded disabled:opacity-50"
+                            title="Retirer ce projet"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sélectionner un projet à assigner */}
+                  {getAvailableProjectsForAssignment().length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={selectedProjectToAssign}
+                        onChange={(e) => setSelectedProjectToAssign(e.target.value)}
+                        disabled={isPending}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                      >
+                        <option value="">-- Sélectionner un projet --</option>
+                        {getAvailableProjectsForAssignment().map((project) => (
+                          <option key={project._id} value={project._id}>
+                            {project.nameProject} {!project.isVisible && '(Non visible)'}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleAssignProject}
+                        disabled={isPending || !selectedProjectToAssign}
+                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Assigner
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">
+                      {allProjects.length === 0
+                        ? "Aucun projet disponible"
+                        : "Tous les projets sont déjà assignés"}
+                    </p>
+                  )}
                 </div>
 
                 {/* Section: Identité */}

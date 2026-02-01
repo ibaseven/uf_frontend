@@ -1,13 +1,15 @@
 "use client";
 import React, { useState } from 'react';
-import { 
-  X, 
-  Save, 
+import {
+  X,
+  Save,
   AlertCircle,
   CheckCircle,
   Upload,
   File,
-  Loader2
+  Loader2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface AddProjectModalProps {
@@ -31,7 +33,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
     duration: '',
     monthlyPayment: '',
     description: '',
-    gainProject: ''
+    gainProject: '',
+    isVisible: true
   });
   
   const [file, setFile] = useState<File | null>(null);
@@ -87,7 +90,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       submitData.append('monthlyPayment', formData.monthlyPayment);
       submitData.append('description', formData.description);
       submitData.append('gainProject', formData.gainProject);
-      
+      submitData.append('isVisible', String(formData.isVisible));
+
       if (file) {
         submitData.append('rapport', file);
       }
@@ -121,7 +125,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       duration: '',
       monthlyPayment: '',
       description: '',
-      gainProject: ''
+      gainProject: '',
+      isVisible: true
     });
     setFile(null);
     setErrors({});
@@ -251,6 +256,43 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
+            </div>
+
+            {/* Visibilité du projet */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Visibilité du projet</label>
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, isVisible: !prev.isVisible }))}
+                  disabled={isLoading}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    formData.isVisible ? 'bg-blue-600' : 'bg-gray-200'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      formData.isVisible ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <div className="flex items-center">
+                  {formData.isVisible ? (
+                    <>
+                      <Eye className="w-4 h-4 text-blue-600 mr-1" />
+                      <span className="text-sm text-blue-600 font-medium">Visible pour tous les actionnaires</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-4 h-4 text-gray-500 mr-1" />
+                      <span className="text-sm text-gray-500 font-medium">Visible uniquement pour les actionnaires assignés</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Si désactivé, seuls les actionnaires spécifiquement assignés pourront voir ce projet
+              </p>
             </div>
 
             {/* Upload rapport */}

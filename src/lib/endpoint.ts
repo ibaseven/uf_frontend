@@ -96,3 +96,9 @@ export const BULK_CREATE_USERS_URL = `${API_URL}/admin/users/bulk-create`;
 export const CREATE_USER_WITH_PASSWORD_URL = `${API_URL}/admin/users/create-with-password`;
 export const SEND_WHATSAPP_INVITATIONS_URL = `${API_URL}/send-whatsapp-invitations`;
 export const SEND_PASSWORDS_ACTIONNAIRES_URL = `${API_URL}/send-passwords-actionnaires`;
+export const ASSIGN_USER_TO_PROJECT_URL = `${API_URL}/projects`;
+export const GET_VISIBLE_PROJECTS_URL = `${API_URL}/projects/visible`;
+
+// Retrait dividendes actionnaire
+export const ACTIONNAIRE_WITHDRAW_INITIATE_URL = `${API_URL}/actionnaire/withdraw/initiate`;
+export const ACTIONNAIRE_WITHDRAW_CONFIRM_URL = `${API_URL}/actionnaire/withdraw/confirm`;
