@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { createdOrUpdated, deleteWithAxios } from "@/lib/api";
-import { UPDATE_USER_URL, DELETE_USER_URL, CALCULATE_DIVIDENDE_URL, BULK_CREATE_USERS_URL, CREATE_USER_WITH_PASSWORD_URL, SEND_WHATSAPP_INVITATIONS_URL, SEND_PASSWORDS_ACTIONNAIRES_URL } from "@/lib/endpoint";
+import { UPDATE_USER_URL, DELETE_USER_URL, CALCULATE_DIVIDENDE_URL, BULK_CREATE_USERS_URL, CREATE_USER_WITH_PASSWORD_URL, SEND_WHATSAPP_INVITATIONS_URL, SEND_PASSWORDS_ACTIONNAIRES_URL, ASSIGN_USER_TO_PROJECT_URL } from "@/lib/endpoint";
 
 const UpdateUserSchema = z.object({
   userId: z.string().min(1, { message: "ID de l'utilisateur requis" }),
@@ -413,6 +413,94 @@ export const sendPasswordsToActionnaires = async () => {
     return {
       type: "error",
       message: "Erreur lors de l'envoi des mots de passe aux actionnaires"
+    };
+  }
+};
+
+// Action : Assigner un projet à un utilisateur
+export const assignProjectToUser = async (formData: { projectId: string; userId: string }) => {
+  try {
+    if (!formData.projectId || !formData.userId) {
+      return {
+        type: "error",
+        message: "ID du projet et de l'utilisateur requis"
+      };
+    }
+
+    const response = await createdOrUpdated({
+      url: `${ASSIGN_USER_TO_PROJECT_URL}/${formData.projectId}/assign/${formData.userId}`,
+      data: {}
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message || "Projet assigné avec succès",
+        project: response.project
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de l'assignation du projet"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans assignProjectToUser:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de l'assignation du projet"
+    };
+  }
+};
+
+// Action : Désassigner un projet d'un utilisateur
+export const unassignProjectFromUser = async (formData: { projectId: string; userId: string }) => {
+  try {
+    if (!formData.projectId || !formData.userId) {
+      return {
+        type: "error",
+        message: "ID du projet et de l'utilisateur requis"
+      };
+    }
+
+    const response = await deleteWithAxios({
+      url: `${ASSIGN_USER_TO_PROJECT_URL}/${formData.projectId}/assign/${formData.userId}`
+    });
+
+    if (response.success) {
+      return {
+        type: "success",
+        message: response.message || "Projet retiré avec succès"
+      };
+    } else {
+      return {
+        type: "error",
+        message: response.message || "Erreur lors de la désassignation du projet"
+      };
+    }
+
+  } catch (error: any) {
+    console.error("Erreur dans unassignProjectFromUser:", error);
+
+    if (error.response?.data?.message) {
+      return {
+        type: "error",
+        message: error.response.data.message
+      };
+    }
+
+    return {
+      type: "error",
+      message: "Erreur lors de la désassignation du projet"
     };
   }
 };
