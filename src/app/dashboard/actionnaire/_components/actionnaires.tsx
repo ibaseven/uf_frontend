@@ -3,7 +3,6 @@ import React from 'react';
 import { Share, DollarSign, User } from 'lucide-react';
 
 import PurchaseMethodSelector from './PurchaseMethodSelector';
-import ActionsSaleModal from './ActionsSaleModal';
 import { ActionsData, UserInfo } from '@/app/Schema/ActionnaireModel';
 import { formatAmount } from '../../../../lib/projectionUtils';
 import Link from 'next/link';
@@ -28,12 +27,6 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
   // Fonction pour formater le nombre d'actions
   const formatActions = (actions: number): string => {
     return new Intl.NumberFormat('fr-FR').format(actions);
-  };
-
-  // Fonction de rafraîchissement après vente
-  const handleSaleSuccess = () => {
-    // Force un rechargement complet de la page pour mettre à jour les données
-    window.location.reload();
   };
 
   // Calculer la valeur par action
@@ -127,33 +120,18 @@ const ActionnaireUserView: React.FC<ActionnaireUserViewProps> = ({
           </div>
         </div>
 
-        {/* <div className="bg-white rounded-2xl p-6 flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-6 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-800">Investissez dès maintenant</h3>
-          <PurchaseMethodSelector 
+          <PurchaseMethodSelector
             currentActions={user?.actionsNumber}
             currentDividends={user?.dividende}
             userInfo={{
               firstName: user.firstName,
               lastName: user.lastName,
-              telephone: user.telephone,
-              // ✅ AJOUT IMPORTANT : Inclure telephonePartenaire
-              telephonePartenaire: user.telephonePartenaire || null
+              telephone: user.telephone
             }}
           />
-          <ActionsSaleModal
-            currentActions={user?.actionsNumber}
-            currentDividends={user?.dividende}
-            userInfo={{
-              firstName: user.firstName,
-              lastName: user.lastName,
-              telephone: user.telephone,
-              // ✅ AJOUT IMPORTANT : Inclure telephonePartenaire
-              telephonePartenaire: user.telephonePartenaire || null
-            }}
-            // ✅ NOUVEAU : Callback pour rafraîchir la page après vente
-            onSaleSuccess={handleSaleSuccess}
-          />
-        </div> */}
+        </div>
       </div>
 
       {/* Résumé et actions */}
