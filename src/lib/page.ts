@@ -1,7 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  LayoutGrid,
-  CalendarCheck,
+  Home,
+  Users,
+  Wallet,
+  FolderKanban,
+  Receipt,
+  ShoppingCart,
+  Building2,
+  ArrowLeftRight,
+  LucideIcon,
 } from "lucide-react";
 
 type Submenu = {
@@ -14,7 +20,7 @@ type Menu = {
   href: string;
   label: string;
   active: boolean;
-  icon: any;
+  icon: LucideIcon;
   submenus: Submenu[];
 };
 
@@ -23,124 +29,115 @@ type Group = {
   menus: Menu[];
 };
 
-export function getPages(pathname: string, role?: string): Group[] {
+// Pages pour les actionnaires
+const actionnairePages = (pathname: string): Group[] => [
+  {
+    groupLabel: "Tableau de bord",
+    menus: [
+      {
+        href: "/dashboard/actionnaire",
+        label: "Mon compte",
+        active: pathname === "/dashboard/actionnaire",
+        icon: Home,
+        submenus: [],
+      },
+    ],
+  },
+  {
+    groupLabel: "Finances",
+    menus: [
+      {
+        href: "/dashboard/dividente",
+        label: "Mes dividendes",
+        active: pathname === "/dashboard/dividente",
+        icon: Wallet,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/mypurchase",
+        label: "Mes achats",
+        active: pathname === "/dashboard/mypurchase",
+        icon: ShoppingCart,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Mes transactions",
+        active: pathname === "/dashboard/transactions",
+        icon: Receipt,
+        submenus: [],
+      },
+    ],
+  },
+  {
+    groupLabel: "Projets",
+    menus: [
+      {
+        href: "/dashboard/project",
+        label: "Projets disponibles",
+        active: pathname === "/dashboard/project",
+        icon: FolderKanban,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/projectEntreprise",
+        label: "Mes projets",
+        active: pathname === "/dashboard/projectEntreprise",
+        icon: Building2,
+        submenus: [],
+      },
+    ],
+  },
+];
 
+// Pages pour les administrateurs
+const adminPages = (pathname: string): Group[] => [
+  {
+    groupLabel: "Administration",
+    menus: [
+      {
+        href: "/dashboard/admin/actionnaire",
+        label: "Actionnaires",
+        active: pathname.includes("/dashboard/admin/actionnaire"),
+        icon: Users,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/admin/prevision",
+        label: "Projets",
+        active: pathname.includes("/dashboard/admin/prevision"),
+        icon: FolderKanban,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/admin/purchaseActionnaire",
+        label: "Achats actions",
+        active: pathname.includes("/dashboard/admin/purchaseActionnaire"),
+        icon: ShoppingCart,
+        submenus: [],
+      },
+      /* {
+        href: "/dashboard/admin/actionssellbuyuser",
+        label: "Transferts",
+        active: pathname.includes("/dashboard/admin/actionssellbuyuser"),
+        icon: ArrowLeftRight,
+        submenus: [],
+      }, */
+      {
+        href: "/dashboard/admin/withdraw",
+        label: "Retraits",
+        active: pathname.includes("/dashboard/admin/withdraw"),
+        icon: Wallet,
+        submenus: [],
+      },
+    ],
+  },
+];
 
-  let rolePages: Group[] = [];
-
-  // Rendre le tableau en fonction du rôle
+export const getPages = (pathname: string, role?: string): Group[] => {
   if (role === "universalLab_Admin") {
-    rolePages = [
-      {
-        groupLabel: "Administrateur",
-        menus: [
-          {
-            href: "/dashboard/admin/actionnaire",
-            label: "Bureau",
-            active: pathname === "/dashboard/admin/actionnaire",
-            icon: LayoutGrid,
-            submenus: []
-          },
-          {
-            href: "/dashboard/admin/prevision",
-            label: "Projects",
-            active: pathname === "/dashboard/admin/prevision",
-            icon: LayoutGrid,
-            submenus: []
-          },
-           {
-            href: "/dashboard/admin/withdraw",
-            label: "Retrait et Depot",
-            active: pathname === "/dashboard/admin/withdraw",
-            icon: LayoutGrid,
-            submenus: []
-          }, 
- {
-            href: " /dashboard/admin/purchaseActionnaire",
-            label: "Historique Transaction Actions",
-            active: pathname === "/dashboard/admin/purchaseActionnaire",
-            icon: LayoutGrid,
-            submenus: []
-          },
- /*{
-            href: " /dashboard/admin/sellaction",
-            label: "Vente des Actions",
-            active: pathname === "/dashboard/admin/sellaction",
-            icon: LayoutGrid,
-            submenus: []
-          }, */
-           /* {
-            href: " /dashboard/admin/actionssellbuyuser",
-            label: "Vente des Actions Entre User",
-            active: pathname === "/dashboard/admin/actionssellbuyuser",
-            icon: LayoutGrid,
-            submenus: []
-          }, */
-         
-         // Ajout de la page paiements
-        ]
-      },
-      
-    ];
-  } else if (role === "actionnaire") {
-    rolePages = [
-      {
-        groupLabel: "Actionnaire",
-        menus: [
-          {
-            href: "/dashboard/actionnaire",
-            label: "ACTIONS",
-            active: pathname === "/dashboard/actionnaire",
-            icon: LayoutGrid,
-            submenus: []
-          },
-          {
-            href: "/dashboard/dividente",
-            label: "DIVIDENDES",
-            active: pathname === "/dashboard/dividente",
-            icon: CalendarCheck,
-            submenus: []
-          },
-           {
-            href: "/dashboard/projectEntreprise",
-            label: "Projects Entreprise",
-            active: pathname === "/dashboard/projectEntreprise",
-            icon: CalendarCheck,
-            submenus: []
-          } 
-          ,
-           {
-            href: "/dashboard/project",
-            label: "Mes Projects",
-            active: pathname === "/dashboard/project",
-            icon: CalendarCheck,
-            submenus: []
-          },
-           /* {
-            href: "/dashboard/prevision",
-            label: "Prevision",
-            active: pathname === "/dashboard/prevision",
-            icon: LayoutGrid,
-            submenus: []
-          }, */
-          { 
-           href: " /dashboard/transactions",
-            label: "Historique Transaction Actions",
-            active: pathname === "/dashboard/transactions",
-            icon: LayoutGrid,
-            submenus: []
-          },
-          { 
-           href: " /dashboard/mypurchase",
-            label: "Achat des Actions",
-            active: pathname === "/dashboard/mypurchase",
-            icon: LayoutGrid,
-            submenus: []
-          },
-        ]
-      },
-    ];
-  } 
+    return adminPages(pathname);
+  }
 
-  return rolePages;
-}
+  return actionnairePages(pathname);
+};

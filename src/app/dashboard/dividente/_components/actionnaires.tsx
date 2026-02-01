@@ -18,7 +18,7 @@ import {
   XCircle,
   Info
 } from 'lucide-react';
-//import { initiateDividendWithdrawal, confirmDividendWithdrawal, getAvailablePaymentMethods } from '@/actions/dividendActions';
+import { initiateActionnaireWithdraw, confirmActionnaireWithdraw } from '@/actions/withdrawActionnaireActions';
 import { ActionsData, UserDashboard, UserInfo, WithdrawalForm } from '@/app/Schema/ActionnaireModel';
 
 
@@ -49,8 +49,12 @@ interface WithdrawalResponse {
   message: string;
   data?: {
     reference: string;
-    disburse_invoice: string;
-    status: string;
+    amount: number;
+    phoneNumber: string;
+    paymentMethod: string;
+    expiresIn: string;
+    currentBalance: number;
+    remainingAfter: number;
   };
 }
 
@@ -98,21 +102,24 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
   }
 
   React.useEffect(() => {
-    const loadPaymentMethods = async () => {
-      try {
-        const methods = await getAvailablePaymentMethods();
-        setPaymentMethods(methods);
-      } catch (error) {
-        console.error('Erreur lors du chargement des méthodes de paiement:', error);
-        setPaymentMethods([
-          { value: 'orange-money-senegal', label: 'Orange Money Sénégal' },
-          { value: 'free-money-senegal', label: 'Free Money Sénégal' },
-          { value: 'wave-senegal', label: 'Wave Sénégal' }
-        ]);
-      }
-    };
-    
-    loadPaymentMethods();
+    // Méthodes de paiement disponibles
+    setPaymentMethods([
+      { value: 'wave-senegal', label: 'Wave Sénégal' },
+      { value: 'orange-money-senegal', label: 'Orange Money Sénégal' },
+      { value: 'free-money-senegal', label: 'Free Money Sénégal' },
+      { value: 'expresso-senegal', label: 'Expresso Sénégal' },
+      { value: 'mtn-benin', label: 'MTN Bénin' },
+      { value: 'moov-benin', label: 'Moov Bénin' },
+      { value: 'mtn-ci', label: 'MTN Côte d\'Ivoire' },
+      { value: 'orange-money-ci', label: 'Orange Money Côte d\'Ivoire' },
+      { value: 'moov-ci', label: 'Moov Côte d\'Ivoire' },
+      { value: 'wave-ci', label: 'Wave Côte d\'Ivoire' },
+      { value: 't-money-togo', label: 'T-Money Togo' },
+      { value: 'moov-togo', label: 'Moov Togo' },
+      { value: 'orange-money-mali', label: 'Orange Money Mali' },
+      { value: 'orange-money-burkina', label: 'Orange Money Burkina Faso' },
+      { value: 'moov-burkina-faso', label: 'Moov Burkina Faso' }
+    ]);
   }, []);
 
   const showTransactions = () => {
@@ -274,14 +281,14 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
 
     setLoading(true);
     setError(null);
-    
+
     try {
-      const result = await initiateDividendWithdrawal({
+      const result = await initiateActionnaireWithdraw({
         phoneNumber: formData.phoneNumber,
         amount: amount,
         paymentMethod: formData.paymentMethod
       });
-      
+
       if (result.type === 'success') {
         setWithdrawalData(result.data || null);
         setShowWithdrawModal(false);
@@ -301,20 +308,19 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
   };
 
   const handleConfirmWithdrawal = async () => {
-    if (!otpCode || !withdrawalData) {
+    if (!otpCode) {
       setError('Veuillez entrer le code OTP');
       return;
     }
 
     setLoading(true);
     setError(null);
-    
+
     try {
-      const result = await confirmDividendWithdrawal({
-        otpCode: otpCode,
-        disburse_invoice: withdrawalData.disburse_invoice
+      const result = await confirmActionnaireWithdraw({
+        otpCode: otpCode
       });
-      
+
       if (result.type === 'success') {
         alert('Retrait confirmé avec succès !');
         setShowOtpModal(false);

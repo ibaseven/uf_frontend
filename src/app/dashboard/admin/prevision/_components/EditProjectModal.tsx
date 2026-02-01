@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useTransition } from 'react';
-import { 
+import {
   X,
   Loader2,
   CheckCircle,
   AlertCircle,
-  Edit
+  Edit,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface EditProjectModalProps {
@@ -19,6 +21,7 @@ interface EditProjectModalProps {
     monthlyPayment?: number;
     description?: string;
     gainProject?: number;
+    isVisible?: boolean;
   };
   onSuccess: () => void;
   onUpdateProject: (projectId: string, formData: FormData) => Promise<any>;
@@ -42,7 +45,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     duration: project.duration.toString(),
     monthlyPayment: project.monthlyPayment?.toString() || '',
     description: project.description || '',
-    gainProject: project.gainProject?.toString() || ''
+    gainProject: project.gainProject?.toString() || '',
+    isVisible: project.isVisible !== undefined ? project.isVisible : true
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +60,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
     if (formData.monthlyPayment) data.append('monthlyPayment', formData.monthlyPayment);
     if (formData.description) data.append('description', formData.description);
     if (formData.gainProject) data.append('gainProject', formData.gainProject);
+    data.append('isVisible', String(formData.isVisible));
 
     startTransition(async () => {
       const result = await onUpdateProject(project._id, data);
@@ -220,6 +225,43 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
               className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100"
               placeholder="Décrivez le projet..."
             />
+          </div>
+
+          {/* Visibilité du projet */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Visibilité du projet</label>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, isVisible: !prev.isVisible }))}
+                disabled={loading}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                  formData.isVisible ? 'bg-orange-600' : 'bg-gray-200'
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    formData.isVisible ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              <div className="flex items-center">
+                {formData.isVisible ? (
+                  <>
+                    <Eye className="w-4 h-4 text-orange-600 mr-1" />
+                    <span className="text-sm text-orange-600 font-medium">Visible pour tous les actionnaires</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4 text-gray-500 mr-1" />
+                    <span className="text-sm text-gray-500 font-medium">Visible uniquement pour les actionnaires assignés</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Si désactivé, seuls les actionnaires spécifiquement assignés pourront voir ce projet
+            </p>
           </div>
 
           <div className="flex gap-3 pt-4 border-t">
