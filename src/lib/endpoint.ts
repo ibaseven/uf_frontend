@@ -50,7 +50,7 @@ export const  RESEND_RESET_OTP_URL  = `${API_URL}/resend-reset-otp`;
 export const  DELETE_USER_URL  = `${API_URL}/deteleUser`;
 export const  DELETE_MULTIPLE_URL  = `${API_URL}/deleteMultipleUsers/batch`;
 export const  INITIATE_ACTIONS_PURCHASE_URL  = `${API_URL}/actions/acheter`;
-export const  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL  = `${API_URL}/actions/acheter-dividendes`;
+export const  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL  = `${API_URL}/buyActionsWithDividends`;
 //Events PURCHASE_ACTIONS_WITH_DIVIDENDS_URL
 export const ADD_PROJECTION_URL = `${API_URL}/projections/addPrevision`;
 export const GET_OWNER_URL = `${API_URL}/getTheOwner`;
