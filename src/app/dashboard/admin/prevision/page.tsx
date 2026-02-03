@@ -1,4 +1,3 @@
-// app/dashboard/projects/page.tsx
 import { fetchJSON } from '@/lib/api';
 import { GET_ALL_PROJECTS_URL, GET_ACTION_PRICE_URL, GET_PROJECT_PARTICIPANTS_URL } from '@/lib/endpoint';
 import ProjectsAdminView from './_components/ProjectsAdminView';
