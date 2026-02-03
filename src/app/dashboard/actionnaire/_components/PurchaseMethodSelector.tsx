@@ -1,17 +1,15 @@
 "use client";
 import React, { useState } from 'react';
-import { 
-  ShoppingCart, 
-  Wallet, 
-  DollarSign, 
+import {
+  ShoppingCart,
+  Wallet,
+  DollarSign,
   Plus,
   X,
   ArrowRight,
-  Bitcoin,
 } from 'lucide-react';
 import ActionsPurchaseModal from './ActionsPurchaseModal';
 import DividendPurchaseModal from './DividendPurchaseModal';
-import CryptoPurchaseModal from './CryptoPurchaseModal';
 
 
 
@@ -31,7 +29,7 @@ const PurchaseMethodSelector: React.FC<PurchaseMethodSelectorProps> = ({
   userInfo 
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<'wallet' | 'dividends' | 'crypto' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'wallet' | 'dividends' | null>(null);
 
   // Fonction pour formater les montants
   const formatAmount = (amount: number): string => {
@@ -56,7 +54,7 @@ const PurchaseMethodSelector: React.FC<PurchaseMethodSelectorProps> = ({
   };
 
   // Sélectionner une méthode
-  const selectMethod = (method: 'wallet' | 'dividends' | 'crypto') => {
+  const selectMethod = (method: 'wallet' | 'dividends') => {
     setSelectedMethod(method);
   };
 
@@ -107,19 +105,6 @@ const PurchaseMethodSelector: React.FC<PurchaseMethodSelectorProps> = ({
     );
   }
 
-  if (selectedMethod === 'crypto') {
-    return (
-      <>
-        <PurchaseButton />
-        <CryptoPurchaseModal
-          currentActions={currentActions}
-          userInfo={userInfo}
-          isOpen={true}
-          onClose={backToSelection}
-        />
-      </>
-    );
-  }
 
   return (
     <>
@@ -170,28 +155,7 @@ const PurchaseMethodSelector: React.FC<PurchaseMethodSelectorProps> = ({
                   </div>
                 </button>
 
-                {/* Option 2: Paiement par crypto */}
-                <button
-                  onClick={() => selectMethod('crypto')}
-                  className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all duration-200 text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="p-3 rounded-full bg-purple-100 group-hover:bg-purple-200 transition-colors">
-                        <Bitcoin className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="font-semibold text-gray-900">Crypto-monnaie</h3>
-                        <p className="text-sm text-gray-600">
-                          USDT (TRC20) - 1 action = 17 USDT
-                        </p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
-                  </div>
-                </button>
-
-                {/* Option 3: Achat avec dividendes */}
+                {/* Option 2: Achat avec dividendes */}
                 <button
                   onClick={() => selectMethod('dividends')}
                   disabled={currentDividends <= 0}
