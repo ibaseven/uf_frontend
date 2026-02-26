@@ -30,22 +30,21 @@ interface WithdrawFormProps {
 type DividendeType = 'actions' | 'project';
 
 const PAYMENT_METHODS = [
-  { value: 'wave-senegal', label: 'Wave Sénégal' },
-  { value: 'orange-money-senegal', label: 'Orange Money Sénégal' },
-  { value: 'free-money-senegal', label: 'Free Money Sénégal' },
-  { value: 'expresso-senegal', label: 'Expresso Sénégal' },
-  { value: 'mtn-benin', label: 'MTN Bénin' },
-  { value: 'moov-benin', label: 'Moov Bénin' },
-  { value: 'mtn-ci', label: 'MTN Côte d\'Ivoire' },
-  { value: 'orange-money-ci', label: 'Orange Money Côte d\'Ivoire' },
-  { value: 'moov-ci', label: 'Moov Côte d\'Ivoire' },
-  { value: 'wave-ci', label: 'Wave Côte d\'Ivoire' },
-  { value: 't-money-togo', label: 'T-Money Togo' },
-  { value: 'moov-togo', label: 'Moov Togo' },
-  { value: 'orange-money-mali', label: 'Orange Money Mali' },
-  { value: 'orange-money-burkina', label: 'Orange Money Burkina Faso' },
-  { value: 'moov-burkina-faso', label: 'Moov Burkina Faso' },
-  { value: 'paydunya', label: 'Paydunya' }
+  { value: 'wave_sn_paydunya', label: 'Wave Sénégal' },
+  { value: 'om_sn_paydunya', label: 'Orange Money Sénégal' },
+  { value: 'free_money_sn_paydunya', label: 'Free Money Sénégal' },
+  { value: 'mtn_bj_paydunya', label: 'MTN Bénin' },
+  { value: 'moov_bj_paydunya', label: 'Moov Bénin' },
+  { value: 'mtn_ci_paydunya', label: 'MTN Côte d\'Ivoire' },
+  { value: 'om_ci_paydunya', label: 'Orange Money Côte d\'Ivoire' },
+  { value: 'moov_ci_paydunya', label: 'Moov Côte d\'Ivoire' },
+  { value: 'wave_ci_paydunya', label: 'Wave Côte d\'Ivoire' },
+  { value: 't_money_tg_paydunya', label: 'T-Money Togo' },
+  { value: 'moov_tg_paydunya', label: 'Moov Togo' },
+  { value: 'om_ml_paydunya', label: 'Orange Money Mali' },
+  { value: 'moov_ml_paydunya', label: 'Moov Mali' },
+  { value: 'om_bf_paydunya', label: 'Orange Money Burkina Faso' },
+  { value: 'moov_bf_paydunya', label: 'Moov Burkina Faso' }
 ];
 
 const WithdrawForm: React.FC<WithdrawFormProps> = ({ 
@@ -61,7 +60,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
   const [dividendeType, setDividendeType] = useState<DividendeType>('actions');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('wave-senegal');
+  const [paymentMethod, setPaymentMethod] = useState('wave_sn_paydunya');
   
   // Étape 2
   const [otpCode, setOtpCode] = useState('');
