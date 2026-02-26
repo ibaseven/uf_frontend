@@ -135,13 +135,13 @@ const ProjectPaymentView: React.FC<ProjectPaymentViewProps> = ({ projects: rawPr
 
       if (result.type === 'success') {
         setSuccess('Paiement initié avec succès !');
-        
-        if (result.invoice?.response_text) {
-        // 🚀 Ouvre directement la page de paiement
-        window.open(result.invoice.response_text, "_blank"); 
-      } else {
-        window.location.reload();
-      }
+
+        const paymentUrl = result.invoice?.response_text || result.invoice?.payment_url;
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
+        } else {
+          setError("URL de paiement non disponible");
+        }
       } else {
         setError(result.message || 'Erreur lors du paiement');
       }
@@ -178,7 +178,7 @@ const ProjectPaymentView: React.FC<ProjectPaymentViewProps> = ({ projects: rawPr
         </div>
       )}
 
-      {error && !showPaymentModal && (
+{error && !showPaymentModal && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
             <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
