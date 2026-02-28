@@ -4,7 +4,7 @@ import { createdOrUpdated } from "@/lib/api";
 import { WITHDRAW_INITIATE_URL_ACTIONS, WITHDRAW_CONFIRM_URL_ACTIONS, WITHDRAW_CONFIRM_URL_PROJECTS, WITHDRAW_INITIATE_URL_PROJECTS } from "@/lib/endpoint";
 
 // ========================================
-// SCHÉMAS DE VALIDATION
+
 // ========================================
 
 const InitiateWithdrawSchema = z.object({
