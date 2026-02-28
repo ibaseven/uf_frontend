@@ -4,7 +4,7 @@ import { createdOrUpdated } from "@/lib/api";
 import { WITHDRAW_INITIATE_URL_ACTIONS, WITHDRAW_CONFIRM_URL_ACTIONS, WITHDRAW_CONFIRM_URL_PROJECTS, WITHDRAW_INITIATE_URL_PROJECTS } from "@/lib/endpoint";
 
 // ========================================
-// SCHÉMAS DE VALIDATION
+
 // ========================================
 
 const InitiateWithdrawSchema = z.object({
@@ -15,22 +15,21 @@ const InitiateWithdrawSchema = z.object({
     .min(100, { message: "Montant minimum: 100 FCFA" })
     .max(1000000, { message: "Montant maximum: 1,000,000 FCFA" }),
   paymentMethod: z.enum([
-    'wave-senegal',
-    'orange-money-senegal',
-    'free-money-senegal',
-    'expresso-senegal',
-    'mtn-benin',
-    'moov-benin',
-    'mtn-ci',
-    'orange-money-ci',
-    'moov-ci',
-    'wave-ci',
-    't-money-togo',
-    'moov-togo',
-    'orange-money-mali',
-    'orange-money-burkina',
-    'moov-burkina-faso',
-    'paydunya'
+    'wave_sn_paydunya',
+    'om_sn_paydunya',
+    'free_money_sn_paydunya',
+    'mtn_bj_paydunya',
+    'moov_bj_paydunya',
+    'mtn_ci_paydunya',
+    'om_ci_paydunya',
+    'moov_ci_paydunya',
+    'wave_ci_paydunya',
+    't_money_tg_paydunya',
+    'moov_tg_paydunya',
+    'om_ml_paydunya',
+    'moov_ml_paydunya',
+    'om_bf_paydunya',
+    'moov_bf_paydunya'
   ], { message: "Méthode de paiement invalide" })
 });
 
