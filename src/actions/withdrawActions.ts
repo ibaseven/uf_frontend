@@ -18,6 +18,7 @@ const InitiateWithdrawSchema = z.object({
     'wave_sn_paydunya',
     'om_sn_paydunya',
     'free_money_sn_paydunya',
+    'expresso_sn_paydunya',
     'mtn_bj_paydunya',
     'moov_bj_paydunya',
     'mtn_ci_paydunya',
@@ -27,7 +28,6 @@ const InitiateWithdrawSchema = z.object({
     't_money_tg_paydunya',
     'moov_tg_paydunya',
     'om_ml_paydunya',
-    'moov_ml_paydunya',
     'om_bf_paydunya',
     'moov_bf_paydunya'
   ], { message: "Méthode de paiement invalide" })
