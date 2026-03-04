@@ -107,6 +107,7 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
       { value: 'wave_sn_paydunya', label: 'Wave Sénégal' },
       { value: 'om_sn_paydunya', label: 'Orange Money Sénégal' },
       { value: 'free_money_sn_paydunya', label: 'Free Money Sénégal' },
+      { value: 'expresso_sn_paydunya', label: 'Expresso (Tigo) Sénégal' },
       { value: 'mtn_bj_paydunya', label: 'MTN Bénin' },
       { value: 'moov_bj_paydunya', label: 'Moov Bénin' },
       { value: 'mtn_ci_paydunya', label: 'MTN Côte d\'Ivoire' },
@@ -116,7 +117,6 @@ const ActionnaireUserViewRer: React.FC<ActionnaireUserViewProps> = ({
       { value: 't_money_tg_paydunya', label: 'T-Money Togo' },
       { value: 'moov_tg_paydunya', label: 'Moov Togo' },
       { value: 'om_ml_paydunya', label: 'Orange Money Mali' },
-      { value: 'moov_ml_paydunya', label: 'Moov Mali' },
       { value: 'om_bf_paydunya', label: 'Orange Money Burkina Faso' },
       { value: 'moov_bf_paydunya', label: 'Moov Burkina Faso' }
     ]);
