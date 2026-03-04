@@ -9,7 +9,10 @@ import {
   GET_MY_ACTIONS_PURCHASES_URL,
   UPDATE_ACTION_PRICE_URL,
   UPDATE_PROFILE_URL,
-  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL
+  PURCHASE_ACTIONS_WITH_DIVIDENDS_URL,
+  GET_SETTINGS_URL,
+  TOGGLE_ACTIONS_BLOCK_URL,
+  TOGGLE_PROJECTS_BLOCK_URL
 } from '@/lib/endpoint';
 
 const BuyActionsSchema = z.object({
@@ -343,6 +346,55 @@ export const purchaseActionsWithDividends = async (formData: {
     return {
       type: "error" as const,
       message: "Erreur lors de l'achat d'actions avec dividendes"
+    };
+  }
+};
+
+export const getSettings = async () => {
+  try {
+    const response = await fetchJSON(GET_SETTINGS_URL);
+    return {
+      type: "success" as const,
+      actionsBlocked: response.actionsBlocked as boolean,
+      projectsBlocked: response.projectsBlocked as boolean,
+      pricePerAction: response.pricePerAction as number
+    };
+  } catch (error: any) {
+    return {
+      type: "error" as const,
+      message: error?.response?.data?.message || "Erreur lors de la récupération des paramètres"
+    };
+  }
+};
+
+export const toggleActionsBlock = async () => {
+  try {
+    const response = await createdOrUpdated({ url: TOGGLE_ACTIONS_BLOCK_URL, data: {} });
+    return {
+      type: "success" as const,
+      message: response.message as string,
+      actionsBlocked: response.actionsBlocked as boolean
+    };
+  } catch (error: any) {
+    return {
+      type: "error" as const,
+      message: error?.response?.data?.message || "Erreur lors du changement d'état"
+    };
+  }
+};
+
+export const toggleProjectsBlock = async () => {
+  try {
+    const response = await createdOrUpdated({ url: TOGGLE_PROJECTS_BLOCK_URL, data: {} });
+    return {
+      type: "success" as const,
+      message: response.message as string,
+      projectsBlocked: response.projectsBlocked as boolean
+    };
+  } catch (error: any) {
+    return {
+      type: "error" as const,
+      message: error?.response?.data?.message || "Erreur lors du changement d'état"
     };
   }
 };
