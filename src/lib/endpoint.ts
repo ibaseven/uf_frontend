@@ -102,3 +102,8 @@ export const GET_VISIBLE_PROJECTS_URL = `${API_URL}/projects/visible`;
 // Retrait dividendes actionnaire
 export const ACTIONNAIRE_WITHDRAW_INITIATE_URL = `${API_URL}/actionnaire/withdraw/initiate`;
 export const ACTIONNAIRE_WITHDRAW_CONFIRM_URL = `${API_URL}/actionnaire/withdraw/confirm`;
+
+// Settings / blocages
+export const GET_SETTINGS_URL = `${API_URL}/settings`;
+export const TOGGLE_ACTIONS_BLOCK_URL = `${API_URL}/settings/toggle-actions-block`;
+export const TOGGLE_PROJECTS_BLOCK_URL = `${API_URL}/settings/toggle-projects-block`;
