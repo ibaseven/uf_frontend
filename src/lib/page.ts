@@ -74,14 +74,14 @@ const actionnairePages = (pathname: string): Group[] => [
     menus: [
       {
         href: "/dashboard/project",
-        label: "Projets disponibles",
+        label: "Mes projets",
         active: pathname === "/dashboard/project",
         icon: FolderKanban,
         submenus: [],
       },
       {
         href: "/dashboard/projectEntreprise",
-        label: "Mes projets",
+        label: "Projets disponibles",
         active: pathname === "/dashboard/projectEntreprise",
         icon: Building2,
         submenus: [],
