@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Building2,
   ArrowLeftRight,
+  FileText,
   LucideIcon,
 } from "lucide-react";
 
@@ -88,6 +89,18 @@ const actionnairePages = (pathname: string): Group[] => [
       },
     ],
   },
+  {
+    groupLabel: "Moratoire",
+    menus: [
+      {
+        href: "/dashboard/moratoire",
+        label: "Mes engagements",
+        active: pathname === "/dashboard/moratoire",
+        icon: FileText,
+        submenus: [],
+      },
+    ],
+  },
 ];
 
 // Pages pour les administrateurs
@@ -128,6 +141,13 @@ const adminPages = (pathname: string): Group[] => [
         label: "Retraits",
         active: pathname.includes("/dashboard/admin/withdraw"),
         icon: Wallet,
+        submenus: [],
+      },
+      {
+        href: "/dashboard/admin/moratoire",
+        label: "Moratoires",
+        active: pathname.includes("/dashboard/admin/moratoire"),
+        icon: FileText,
         submenus: [],
       },
     ],
