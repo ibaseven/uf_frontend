@@ -107,3 +107,8 @@ export const ACTIONNAIRE_WITHDRAW_CONFIRM_URL = `${API_URL}/actionnaire/withdraw
 export const GET_SETTINGS_URL = `${API_URL}/settings`;
 export const TOGGLE_ACTIONS_BLOCK_URL = `${API_URL}/settings/toggle-actions-block`;
 export const TOGGLE_PROJECTS_BLOCK_URL = `${API_URL}/settings/toggle-projects-block`;
+
+// Moratoire
+export const MORATOIRE_URL = `${API_URL}/moratoire`;
+export const MORATOIRE_USER_URL = `${API_URL}/moratoire/user/me`;
+export const MORATOIRE_VERSEMENT_INITIATE_URL = `${API_URL}/moratoire/versement/initiate`;
